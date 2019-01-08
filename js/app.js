@@ -15,9 +15,10 @@ function parseMapData(results, file) {
   const heatmapData = results.data.map(parseLine);
   const heatmap = new google.maps.visualization.HeatmapLayer({
     data: heatmapData,
-    radius: 50
+    map,
+    opacity: .4,
+    radius: 200
   });
-  heatmap.setMap(map);
 }
 
 const config = {
