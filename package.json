@@ -1,0 +1,16 @@
+{
+  "name": "prn-maps",
+  "version": "0.1.0",
+  "description": "Visualisation of PRN map data.",
+  "main": "index.html",
+  "dependencies": {
+    "express": "^4.13.4"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "Jim O'Donnell <jim@zooniverse.org>",
+  "license": "Apache-2.0"
+}
