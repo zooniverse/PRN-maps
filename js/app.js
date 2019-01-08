@@ -1,4 +1,4 @@
-const mapDataURL = '/test-data/overlay_3.csv';
+const mapDataURL = 'test-data/overlay_3.csv';
 const center = new google.maps.LatLng(15.231458142,-61.2507115);
 const map = new google.maps.Map(document.getElementById('map'), {
   center,
