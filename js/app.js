@@ -14,7 +14,8 @@ function parseLine([lat, lng, weight]) {
 function parseMapData(results, file) {
   const heatmapData = results.data.map(parseLine);
   const heatmap = new google.maps.visualization.HeatmapLayer({
-    data: heatmapData
+    data: heatmapData,
+    radius: 50
   });
   heatmap.setMap(map);
 }
