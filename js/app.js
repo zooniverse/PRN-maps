@@ -5,9 +5,11 @@ const map = new google.maps.Map(document.getElementById('map'), {
   zoom: 10,
   mapTypeId: 'satellite'
 });
+const bounds  = new google.maps.LatLngBounds();
 
 function parseLine([lat, lng, weight]) {
   const location = new google.maps.LatLng(lat, lng);
+  bounds.extend(location);
   return { location, weight };
 }
 
@@ -19,6 +21,8 @@ function parseMapData(results, file) {
     opacity: .4,
     radius: 200
   });
+  map.fitBounds(bounds);
+  map.panToBounds(bounds);
 }
 
 const config = {
