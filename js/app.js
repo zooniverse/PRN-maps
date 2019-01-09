@@ -7,6 +7,10 @@ const map = new google.maps.Map(document.getElementById('map'), {
 });
 const bounds  = new google.maps.LatLngBounds();
 
+function minimumWeight([lat, lng, weight]) {
+  return weight > 2;
+}
+
 function parseLine([lat, lng, weight]) {
   const location = new google.maps.LatLng(lat, lng);
   bounds.extend(location);
@@ -14,12 +18,13 @@ function parseLine([lat, lng, weight]) {
 }
 
 function parseMapData(results, file) {
-  const heatmapData = results.data.map(parseLine);
+  const heatmapData = results.data
+    .filter(minimumWeight)
+    .map(parseLine);
   const heatmap = new google.maps.visualization.HeatmapLayer({
     data: heatmapData,
     map,
-    opacity: .4,
-    radius: 200
+    opacity: .4
   });
   map.fitBounds(bounds);
   map.panToBounds(bounds);
