@@ -12,15 +12,22 @@ const map = new google.maps.Map(document.getElementById('map'), {
   zoom: 10,
   mapTypeId: 'satellite'
 });
-const bounds  = new google.maps.LatLngBounds();
 
 const heatmap = new google.maps.visualization.HeatmapLayer({
   map,
   opacity: .4
 });
+let bounds;
+let heatmapData;
+let fitToBounds = false;
+
+const MAP_THRESHOLD = document.getElementById('map-threshold');
+const MAP_SELECT = document.getElementById('map-select');
+const HEATMAPS = {};
 
 function minimumWeight([lat, lng, weight]) {
-  return weight > 2;
+  const threshold = parseInt(MAP_THRESHOLD.value);
+  return weight > threshold;
 }
 
 function parseLine([lat, lng, weight]) {
@@ -29,28 +36,49 @@ function parseLine([lat, lng, weight]) {
   return { location, weight };
 }
 
-function parseMapData(results, file) {
-  const heatmapData = results.data
+function parseMapData(results) {
+  bounds  = new google.maps.LatLngBounds();
+  heatmapData = results.data
     .filter(minimumWeight)
     .map(parseLine);
-    heatmap.setData(heatmapData);
-  map.fitBounds(bounds);
-  map.panToBounds(bounds);
+  heatmap.setData(heatmapData);
+  if (fitToBounds) {
+    map.fitBounds(bounds);
+    map.panToBounds(bounds);
+    fitToBounds = false;
+  }
 }
 
-function renderMapLayer(index) {
+function cacheMapData(results, file) {
+  HEATMAPS[file] = results;
+  parseMapData(results); 
+}
+
+function readMapFile(index) {
   const config = {
     download: true,
+    fastMode: true,
     skipEmptyLines: true,
-    complete: parseMapData
+    chunk: cacheMapData
   }
   Papa.parse(mapData[index].url, config);
 }
 
-function onMapSelect(event) {
-  const index = parseInt(event.target.value);
-  renderMapLayer(index);
+function renderMap() {
+  const index = parseInt(MAP_SELECT.value);
+  const url = mapData[index].url;
+  if (HEATMAPS[url]) {
+    parseMapData(HEATMAPS[url]);
+  } else {
+    readMapFile(index);
+  }
 }
 
-renderMapLayer(0);
-document.getElementById('map-select').addEventListener('change', onMapSelect);
+function renderMapAndFit() {
+  fitToBounds = true;
+  renderMap();
+}
+
+renderMapAndFit();
+MAP_SELECT.addEventListener('change', renderMapAndFit);
+MAP_THRESHOLD.addEventListener('change', renderMap);
