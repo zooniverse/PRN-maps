@@ -2,11 +2,7 @@ const MAP_THRESHOLD = document.getElementById('map-threshold');
 const MAP_SELECT = document.getElementById('map-select');
 const HEATMAPS = {};
 
-API.events()
-.then(function ([event]) {
-  return API.layers(event.name)
-})
-.then(function (layers) {
+function buildLayersMenu(layers) {
   document.querySelectorAll('#map-select option').forEach(function (node) {
     MAP_SELECT.removeChild(node);
   });
@@ -16,7 +12,13 @@ API.events()
     option.text = layer.name;
     MAP_SELECT.add(option);
   });
+}
+
+API.events()
+.then(function ([event]) {
+  return API.layers(event.name)
 })
+.then(buildLayersMenu)
 .then(renderMapAndFit);
 
 const center = new google.maps.LatLng(15.231458142,-61.2507115);
