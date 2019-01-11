@@ -59,7 +59,9 @@ function parseMapData(results) {
 }
 
 function cacheMapData(results, file) {
-  HEATMAPS[file] = results;
+  const index = MAP_SELECT.value;
+  const url = mapData[index] ? mapData[index].url : undefined;
+  HEATMAPS[url] = url ? results : undefined;
   parseMapData(results); 
 }
 
