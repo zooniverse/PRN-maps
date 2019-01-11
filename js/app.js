@@ -1,18 +1,23 @@
-let mapData = [];
+const MAP_THRESHOLD = document.getElementById('map-threshold');
+const MAP_SELECT = document.getElementById('map-select');
+const HEATMAPS = {};
 
 API.events()
 .then(function ([event]) {
   return API.layers(event.name)
 })
 .then(function (layers) {
-  mapData = layers.map(function (layer) {
-    return {
-      title: layer.name,
-      url: layer.url
-    }
+  document.querySelectorAll('#map-select option').forEach(function (node) {
+    MAP_SELECT.removeChild(node);
   });
-  renderMapAndFit();
-});
+  layers.forEach(function (layer, i) {
+    const option = document.createElement('option');
+    option.value = layer.url;
+    option.text = layer.name;
+    MAP_SELECT.add(option);
+  });
+})
+.then(renderMapAndFit);
 
 const center = new google.maps.LatLng(15.231458142,-61.2507115);
 const map = new google.maps.Map(document.getElementById('map'), {
@@ -29,10 +34,6 @@ const heatmap = new google.maps.visualization.HeatmapLayer({
 let bounds;
 let heatmapData;
 let fitToBounds = false;
-
-const MAP_THRESHOLD = document.getElementById('map-threshold');
-const MAP_SELECT = document.getElementById('map-select');
-const HEATMAPS = {};
 
 function minimumWeight([lat, lng, weight]) {
   const threshold = parseInt(MAP_THRESHOLD.value);
@@ -59,32 +60,28 @@ function parseMapData(results) {
 }
 
 function cacheMapData(results, file) {
-  const index = MAP_SELECT.value;
-  const url = mapData[index] ? mapData[index].url : undefined;
+  const url = MAP_SELECT.value;
   HEATMAPS[url] = url ? results : undefined;
   parseMapData(results); 
 }
 
-function readMapFile(index) {
+function readMapFile(url) {
   const config = {
     download: true,
     fastMode: true,
     skipEmptyLines: true,
     chunk: cacheMapData
   }
-  console.log(mapData[index].url)
-  Papa.parse(mapData[index].url, config);
+  console.log(url)
+  Papa.parse(url, config);
 }
 
 function renderMap() {
-  const index = parseInt(MAP_SELECT.value);
-  if (mapData[index]) {
-    const url = mapData[index].url;
-    if (HEATMAPS[url]) {
-      parseMapData(HEATMAPS[url]);
-    } else {
-      readMapFile(index);
-    }
+  const url = MAP_SELECT.value;
+  if (HEATMAPS[url]) {
+    parseMapData(HEATMAPS[url]);
+  } else {
+    readMapFile(url);
   }
 }
 
