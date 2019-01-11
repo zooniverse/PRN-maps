@@ -1,11 +1,19 @@
-const mapData = [];
-for (let i = 0; i < 5; i++) {
-  const mapSource = {
-    title: "overlay_" + i,
-    url: `test-data/overlay_${i}.csv`
-  };
-  mapData.push(mapSource);
-}
+let mapData = [];
+
+API.events()
+.then(function ([event]) {
+  return API.layers(event.name)
+})
+.then(function (layers) {
+  mapData = layers.map(function (layer) {
+    return {
+      title: layer.name,
+      url: layer.url
+    }
+  });
+  renderMapAndFit();
+});
+
 const center = new google.maps.LatLng(15.231458142,-61.2507115);
 const map = new google.maps.Map(document.getElementById('map'), {
   center,
@@ -62,16 +70,19 @@ function readMapFile(index) {
     skipEmptyLines: true,
     chunk: cacheMapData
   }
+  console.log(mapData[index].url)
   Papa.parse(mapData[index].url, config);
 }
 
 function renderMap() {
   const index = parseInt(MAP_SELECT.value);
-  const url = mapData[index].url;
-  if (HEATMAPS[url]) {
-    parseMapData(HEATMAPS[url]);
-  } else {
-    readMapFile(index);
+  if (mapData[index]) {
+    const url = mapData[index].url;
+    if (HEATMAPS[url]) {
+      parseMapData(HEATMAPS[url]);
+    } else {
+      readMapFile(index);
+    }
   }
 }
 
@@ -80,6 +91,5 @@ function renderMapAndFit() {
   renderMap();
 }
 
-renderMapAndFit();
 MAP_SELECT.addEventListener('change', renderMapAndFit);
 MAP_THRESHOLD.addEventListener('change', renderMap);
