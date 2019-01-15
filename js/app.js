@@ -15,6 +15,7 @@ const map = new google.maps.Map(document.getElementById('map'), {
 
 const heatmap = new google.maps.visualization.HeatmapLayer({
   map,
+  maxIntensity: 30,
   opacity: .4
 });
 let bounds;
