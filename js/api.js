@@ -1,7 +1,8 @@
 const API = {
-  host: 'http://localhost.pfe-preview.zooniverse.org:3000',
+  host: 'http://localhost.zooniverse.org:3000',
   get: function(path, defaultValue) {
     return superagent.get(`${API.host}${path}`)
+    .withCredentials()
     .then(function (response) {
       return JSON.parse(response.text);
     })
@@ -18,5 +19,8 @@ const API = {
   },
   manifests: function (eventName) {
     return API.get(`/manifests/${eventName}`, {});
+  },
+  pendingLayers: function (eventName) {
+    return API.get(`/pending/layers/${eventName}`, []);
   }
 }
