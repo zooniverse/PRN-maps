@@ -1,5 +1,5 @@
 const API = {
-  host: 'http://localhost.zooniverse.org:3000',
+  host: 'https://maps-api.planetaryresponsenetwork.org',
   get: function(path, defaultValue) {
     return superagent.get(`${API.host}${path}`)
     .withCredentials()
