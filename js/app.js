@@ -2,6 +2,16 @@ const MAP_THRESHOLD = document.getElementById('map-threshold');
 const MAP_SELECT = document.getElementById('map-select');
 const HEATMAPS = {};
 
+function queryParams() {
+  const queryString = window.location.search.substring(1);
+  const queryPairs = queryString.split('&');
+  return queryPairs.reduce(function (query, queryPair) {
+    const [param, value] = queryPair.split('=');
+    query[param] = value;
+    return query;
+  }, {});
+}
+
 function buildLayersMenu(layers) {
   document.querySelectorAll('#map-select option').forEach(function (node) {
     MAP_SELECT.removeChild(node);
@@ -16,7 +26,8 @@ function buildLayersMenu(layers) {
 
 API.events()
 .then(function ([event]) {
-  return API.layers(event.name)
+  const getLayers = queryParams().pending ? 'pendingLayers' : 'layers';
+  return API[getLayers](event.name)
 })
 .then(buildLayersMenu)
 .then(renderMapAndFit);
