@@ -1,11 +1,37 @@
-const mapData = [];
-for (let i = 0; i < 5; i++) {
-  const mapSource = {
-    title: "overlay_" + i,
-    url: `test-data/overlay_${i}.csv`
-  };
-  mapData.push(mapSource);
+const MAP_THRESHOLD = document.getElementById('map-threshold');
+const MAP_SELECT = document.getElementById('map-select');
+const HEATMAPS = {};
+
+function queryParams() {
+  const queryString = window.location.search.substring(1);
+  const queryPairs = queryString.split('&');
+  return queryPairs.reduce(function (query, queryPair) {
+    const [param, value] = queryPair.split('=');
+    query[param] = value;
+    return query;
+  }, {});
 }
+
+function buildLayersMenu(layers) {
+  document.querySelectorAll('#map-select option').forEach(function (node) {
+    MAP_SELECT.removeChild(node);
+  });
+  layers.forEach(function (layer, i) {
+    const option = document.createElement('option');
+    option.value = layer.url;
+    option.text = layer.name;
+    MAP_SELECT.add(option);
+  });
+}
+
+API.events()
+.then(function ([event]) {
+  const getLayers = queryParams().pending ? 'pendingLayers' : 'layers';
+  return API[getLayers](event.name)
+})
+.then(buildLayersMenu)
+.then(renderMapAndFit);
+
 const center = new google.maps.LatLng(15.231458142,-61.2507115);
 const map = new google.maps.Map(document.getElementById('map'), {
   center,
@@ -21,10 +47,6 @@ const heatmap = new google.maps.visualization.HeatmapLayer({
 let bounds;
 let heatmapData;
 let fitToBounds = false;
-
-const MAP_THRESHOLD = document.getElementById('map-threshold');
-const MAP_SELECT = document.getElementById('map-select');
-const HEATMAPS = {};
 
 function minimumWeight([lat, lng, weight]) {
   const threshold = parseInt(MAP_THRESHOLD.value);
@@ -51,27 +73,28 @@ function parseMapData(results) {
 }
 
 function cacheMapData(results, file) {
-  HEATMAPS[file] = results;
+  const url = MAP_SELECT.value;
+  HEATMAPS[url] = url ? results : undefined;
   parseMapData(results); 
 }
 
-function readMapFile(index) {
+function readMapFile(url) {
   const config = {
     download: true,
     fastMode: true,
     skipEmptyLines: true,
     chunk: cacheMapData
   }
-  Papa.parse(mapData[index].url, config);
+  console.log(url)
+  Papa.parse(url, config);
 }
 
 function renderMap() {
-  const index = parseInt(MAP_SELECT.value);
-  const url = mapData[index].url;
+  const url = MAP_SELECT.value;
   if (HEATMAPS[url]) {
     parseMapData(HEATMAPS[url]);
   } else {
-    readMapFile(index);
+    readMapFile(url);
   }
 }
 
@@ -80,6 +103,5 @@ function renderMapAndFit() {
   renderMap();
 }
 
-renderMapAndFit();
 MAP_SELECT.addEventListener('change', renderMapAndFit);
 MAP_THRESHOLD.addEventListener('change', renderMap);
