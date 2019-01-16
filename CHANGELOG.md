@@ -4,6 +4,7 @@
 
 **Merged pull requests:**
 
+- Map options [\#4](https://github.com/zooniverse/PRN-maps/pull/4) ([eatyourgreens](https://github.com/eatyourgreens))
 - Add a note about browser support [\#3](https://github.com/zooniverse/PRN-maps/pull/3) ([eatyourgreens](https://github.com/eatyourgreens))
 - add getting started notes [\#2](https://github.com/zooniverse/PRN-maps/pull/2) ([camallen](https://github.com/camallen))
 - Connect up the events API [\#1](https://github.com/zooniverse/PRN-maps/pull/1) ([eatyourgreens](https://github.com/eatyourgreens))
