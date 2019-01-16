@@ -1,5 +1,17 @@
+const MAP_CONTAINER = document.getElementById('map');
 const MAP_THRESHOLD = document.getElementById('map-threshold');
 const MAP_SELECT = document.getElementById('map-select');
+const MAP_OPTIONS = {
+  zoom: 10,
+  mapTypeControl: true,
+  mapTypeControlOptions: {
+    style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+    mapTypeIds: ['hybrid', 'satellite', 'roadmap', 'terrain']
+  },
+  mapTypeId: 'hybrid',
+  scaleControl: true,
+  streetViewControl: false
+}
 const HEATMAPS = {};
 
 function queryParams() {
@@ -33,11 +45,7 @@ API.events()
 .then(renderMapAndFit);
 
 const center = new google.maps.LatLng(15.231458142,-61.2507115);
-const map = new google.maps.Map(document.getElementById('map'), {
-  center,
-  zoom: 10,
-  mapTypeId: 'satellite'
-});
+const map = new google.maps.Map(MAP_CONTAINER, Object.assign(MAP_OPTIONS, { center }));
 
 const heatmap = new google.maps.visualization.HeatmapLayer({
   map,
