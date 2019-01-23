@@ -13,6 +13,9 @@ const MAP_OPTIONS = {
   streetViewControl: false
 }
 const HEATMAPS = {};
+var TILE_URL = 'http://local.zooniverse.org:8080/data/palu_2018/{z}/{x}/{y}.png';
+
+const layerID = 'palu_2018_before';
 
 function queryParams() {
   const queryString = window.location.search.substring(1);
@@ -46,6 +49,25 @@ API.events()
 
 const center = new google.maps.LatLng(15.231458142,-61.2507115);
 const map = new google.maps.Map(MAP_CONTAINER, Object.assign(MAP_OPTIONS, { center }));
+
+// create the custom map tiles
+var customTileMap = new google.maps.ImageMapType({
+  name: layerID,
+  getTileUrl: function(coord, zoom) {
+    // console.log(coord);
+    var url = TILE_URL
+      .replace('{x}', coord.x)
+      .replace('{y}', coord.y)
+      .replace('{z}', zoom);
+    return url;
+  },
+  tileSize: new google.maps.Size(256, 256),
+  minZoom: 10,
+  maxZoom: 15
+});
+
+// add the tile map type as an overlay over the existing
+map.overlayMapTypes.insertAt(0, customTileMap);
 
 const heatmap = new google.maps.visualization.HeatmapLayer({
   map,
@@ -83,7 +105,7 @@ function parseMapData(results) {
 function cacheMapData(results, file) {
   const url = MAP_SELECT.value;
   HEATMAPS[url] = url ? results : undefined;
-  parseMapData(results); 
+  parseMapData(results);
 }
 
 function readMapFile(url) {
