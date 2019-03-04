@@ -36,11 +36,9 @@ function buildLayersMenu(layers) {
   });
 }
 
-API.events()
-.then(function ([event]) {
-  const getLayers = queryParams().pending ? 'pendingLayers' : 'layers';
-  return API[getLayers](event.name)
-})
+const eventName = queryParams().event
+const getLayers = queryParams().pending ? 'pendingLayers' : 'layers';
+API[getLayers](eventName)
 .then(buildLayersMenu)
 .then(renderMapAndFit);
 
