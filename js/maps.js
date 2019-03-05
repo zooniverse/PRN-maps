@@ -13,6 +13,7 @@ const MAP_OPTIONS = {
   streetViewControl: false
 }
 const HEATMAPS = {};
+const HEATMAP_DATA = {};
 
 function queryParams() {
   const queryString = window.location.search.substring(1);
@@ -56,7 +57,6 @@ const center = new google.maps.LatLng(15.231458142,-61.2507115);
 const map = new google.maps.Map(MAP_CONTAINER, Object.assign(MAP_OPTIONS, { center }));
 
 let bounds;
-let heatmapData;
 let fitToBounds = false;
 
 function minimumWeight([lat, lng, weight]) {
@@ -70,15 +70,19 @@ function parseLine([lat, lng, weight]) {
   return { location, weight };
 }
 
+function filteredMapData(results) {
+  return results.data
+    .filter(minimumWeight)
+    .map(parseLine);
+}
+
 function parseMapData(results, url) {
   const heatmap = new google.maps.visualization.HeatmapLayer({
     maxIntensity: 30,
     opacity: .4
   });
   bounds  = new google.maps.LatLngBounds();
-  heatmapData = results.data
-    .filter(minimumWeight)
-    .map(parseLine);
+  const heatmapData = filteredMapData(results);
   heatmap.setData(heatmapData);
   if (fitToBounds) {
     map.fitBounds(bounds);
@@ -92,6 +96,7 @@ function parseMapData(results, url) {
 function cacheMapData(results, file) {
   const url = file.streamer._input;
   console.log(url)
+  HEATMAP_DATA[url] = url ? results : undefined;
   parseMapData(results, url); 
 }
 
@@ -115,6 +120,8 @@ function renderMap() {
     .forEach(function (node) {
       const url = node.value;
       if (HEATMAPS[url]) {
+        const heatmapData = filteredMapData(HEATMAP_DATA[url]);
+        HEATMAPS[url].setData(heatmapData);
         HEATMAPS[url].setMap(map);
       } else {
         readMapFile(url);
