@@ -2,8 +2,17 @@
 
 ## [Unreleased](https://github.com/zooniverse/PRN-maps/tree/HEAD)
 
+**Closed issues:**
+
+- Allow users to toggle multiple layers at once [\#8](https://github.com/zooniverse/PRN-maps/issues/8)
+- Add PRN events overview landing page [\#6](https://github.com/zooniverse/PRN-maps/issues/6)
+
 **Merged pull requests:**
 
+- Filter layer data by minimum value [\#13](https://github.com/zooniverse/PRN-maps/pull/13) ([eatyourgreens](https://github.com/eatyourgreens))
+- Multiple heatmap layers [\#11](https://github.com/zooniverse/PRN-maps/pull/11) ([eatyourgreens](https://github.com/eatyourgreens))
+- Build events list from the API [\#10](https://github.com/zooniverse/PRN-maps/pull/10) ([eatyourgreens](https://github.com/eatyourgreens))
+- Add events listing [\#9](https://github.com/zooniverse/PRN-maps/pull/9) ([eatyourgreens](https://github.com/eatyourgreens))
 - Map options [\#4](https://github.com/zooniverse/PRN-maps/pull/4) ([eatyourgreens](https://github.com/eatyourgreens))
 - Add a note about browser support [\#3](https://github.com/zooniverse/PRN-maps/pull/3) ([eatyourgreens](https://github.com/eatyourgreens))
 - add getting started notes [\#2](https://github.com/zooniverse/PRN-maps/pull/2) ([camallen](https://github.com/camallen))
