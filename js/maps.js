@@ -24,32 +24,37 @@ function queryParams() {
   }, {});
 }
 
+function buildLayerInput(layer) {
+  const option = document.createElement('label');
+  const checkbox = document.createElement('input');
+  const text = document.createTextNode(layer.name)
+  checkbox.type='checkbox';
+  checkbox.value = layer.url;
+  checkbox.checked = true;
+  option.appendChild(checkbox)
+  option.appendChild(text);
+  return option;
+}
 function buildLayersMenu(layers) {
-  document.querySelectorAll('#map-select option').forEach(function (node) {
+  document.querySelectorAll('#map-select label').forEach(function (node) {
     MAP_SELECT.removeChild(node);
   });
-  layers.forEach(function (layer, i) {
-    const option = document.createElement('option');
-    option.value = layer.url;
-    option.text = layer.name;
-    MAP_SELECT.add(option);
-  });
+  layers
+    .map(buildLayerInput)
+    .forEach(function (input) {
+      MAP_SELECT.appendChild(input);
+    });
 }
 
 const eventName = queryParams().event
 const getLayers = queryParams().pending ? 'pendingLayers' : 'layers';
 API[getLayers](eventName)
-.then(buildLayersMenu)
-.then(renderMapAndFit);
+  .then(buildLayersMenu)
+  .then(renderMapAndFit);
 
 const center = new google.maps.LatLng(15.231458142,-61.2507115);
 const map = new google.maps.Map(MAP_CONTAINER, Object.assign(MAP_OPTIONS, { center }));
 
-const heatmap = new google.maps.visualization.HeatmapLayer({
-  map,
-  maxIntensity: 30,
-  opacity: .4
-});
 let bounds;
 let heatmapData;
 let fitToBounds = false;
@@ -65,7 +70,11 @@ function parseLine([lat, lng, weight]) {
   return { location, weight };
 }
 
-function parseMapData(results) {
+function parseMapData(results, url) {
+  const heatmap = new google.maps.visualization.HeatmapLayer({
+    maxIntensity: 30,
+    opacity: .4
+  });
   bounds  = new google.maps.LatLngBounds();
   heatmapData = results.data
     .filter(minimumWeight)
@@ -76,12 +85,14 @@ function parseMapData(results) {
     map.panToBounds(bounds);
     fitToBounds = false;
   }
+  heatmap.setMap(map);
+  HEATMAPS[url] = url ? heatmap : undefined;
 }
 
 function cacheMapData(results, file) {
-  const url = MAP_SELECT.value;
-  HEATMAPS[url] = url ? results : undefined;
-  parseMapData(results); 
+  const url = file.streamer._input;
+  console.log(url)
+  parseMapData(results, url); 
 }
 
 function readMapFile(url) {
@@ -96,12 +107,19 @@ function readMapFile(url) {
 }
 
 function renderMap() {
-  const url = MAP_SELECT.value;
-  if (HEATMAPS[url]) {
-    parseMapData(HEATMAPS[url]);
-  } else {
-    readMapFile(url);
-  }
+  const urls = Object.keys(HEATMAPS);
+  urls.forEach(function (url) {
+    HEATMAPS[url] && HEATMAPS[url].setMap(null);
+  })
+  MAP_SELECT.querySelectorAll('input:checked')
+    .forEach(function (node) {
+      const url = node.value;
+      if (HEATMAPS[url]) {
+        HEATMAPS[url].setMap(map);
+      } else {
+        readMapFile(url);
+      }
+    })
 }
 
 function renderMapAndFit() {
