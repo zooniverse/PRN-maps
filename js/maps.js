@@ -14,6 +14,15 @@ const MAP_OPTIONS = {
 }
 const HEATMAPS = {};
 const HEATMAP_DATA = {};
+const HEATMAP_COLOURS = [  // Pre-set colour gradients for each heatmap
+  ['transparent', '#844', '#c44', '#f44', '#f00'],
+  ['transparent', '#844', '#c44', '#f44', '#f00'],
+  ['transparent', '#844', '#c44', '#f44', '#f00'],
+  ['transparent', '#844', '#c44', '#f44', '#f00'],
+  ['transparent', '#844', '#c44', '#f44', '#f00'],
+  ['transparent', '#844', '#c44', '#f44', '#f00'],
+];
+
 
 function queryParams() {
   const queryString = window.location.search.substring(1);
@@ -77,7 +86,13 @@ function filteredMapData(results) {
 }
 
 function parseMapData(results, url) {
+  // For each heatmap, assign a preset colour to it.
+  const numberOfHeatmaps = Object.keys(HEATMAPS).length;
+  const colourIndex = numberOfHeatmaps % HEATMAP_COLOURS.length;
+  const gradient = HEATMAP_COLOURS[colourIndex];
+  
   const heatmap = new google.maps.visualization.HeatmapLayer({
+    gradient,
     maxIntensity: 30,
     opacity: .4
   });
