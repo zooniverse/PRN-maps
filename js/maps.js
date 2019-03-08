@@ -15,6 +15,21 @@ const MAP_OPTIONS = {
 const HEATMAPS = {};
 const HEATMAP_DATA = {};
 
+let HEATMAP_COLOURS = [  // Pre-set colour gradients for each heatmap
+  ['rgba(204, 068, 068, 0.0)', 'rgba(204, 068, 068, 0.6)', 'rgba(255, 136, 136, 0.6)'],  // Red
+  ['rgba(204, 204, 068, 0.0)', 'rgba(204, 204, 068, 0.6)', 'rgba(255, 255, 136, 0.6)'],  // Yellow
+  ['rgba(068, 204, 204, 0.0)', 'rgba(068, 204, 204, 0.6)', 'rgba(136, 255, 255, 0.6)'],  // Cyan
+  ['rgba(068, 204, 068, 0.0)', 'rgba(068, 204, 068, 0.6)', 'rgba(136, 255, 136, 0.6)'],  // Green
+  ['rgba(204, 068, 204, 0.0)', 'rgba(204, 068, 204, 0.6)', 'rgba(255, 136, 255, 0.6)'],  // Magenta
+  ['rgba(068, 068, 204, 0.0)', 'rgba(068, 068, 204, 0.6)', 'rgba(136, 136, 255, 0.6)'],  // Blue
+];
+// Pad the colour gradient to favour the high-intensity colours.
+// We need at least 8 steps in the gradient - the first being transparent - for this to look good.
+HEATMAP_COLOURS = HEATMAP_COLOURS.map(function spreadColours(arr) {
+  return [arr[0], arr[1], arr[1], arr[1], arr[2], arr[2], arr[2], arr[2]];
+});
+
+
 function queryParams() {
   const queryString = window.location.search.substring(1);
   const queryPairs = queryString.split('&');
@@ -77,9 +92,15 @@ function filteredMapData(results) {
 }
 
 function parseMapData(results, url) {
+  // For each heatmap, assign a preset colour to it.
+  const numberOfHeatmaps = Object.keys(HEATMAPS).length;
+  const colourIndex = numberOfHeatmaps % HEATMAP_COLOURS.length;
+  const heatmapColour = HEATMAP_COLOURS[colourIndex];
+  
   const heatmap = new google.maps.visualization.HeatmapLayer({
+    gradient: heatmapColour,
     maxIntensity: 30,
-    opacity: .4
+    opacity: 1
   });
   bounds  = new google.maps.LatLngBounds();
   const heatmapData = filteredMapData(results);
