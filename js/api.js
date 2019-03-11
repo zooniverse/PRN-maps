@@ -11,6 +11,21 @@ const API = {
       return defaultValue;
     });
   },
+  post: function(path, data) {
+    return superagent.post(`${API.host}${path}`)
+    .send(data)
+    .withCredentials()
+    .then(function (response) {
+      return JSON.parse(response.text);
+    })
+    .catch(function (error) {
+      console.error(error);
+      return defaultValue;
+    });
+  },
+  approve: function (eventName) {
+    return API.post(`/pending/layers/${eventName}/approve`);
+  },
   events: function () {
     return API.get('/events', []);
   },
