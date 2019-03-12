@@ -4,11 +4,62 @@
 <main id="upload-page">
   <form>
     <div class="row">
+      <label>Metadata</label>
+<textarea id="metadata" name="metadata">
+{
+  "key1": "value1",
+  "key2": "value2"
+}
+</textarea>
+      <span id="metadata-status"></span>
+    </div>
+    <div class="row">
       <label>Files</label>
-      <input type="file" accept=".csv, .json" multiple>
+      <input name="data" type="file" accept=".csv, .json" multiple>
     </div>
     <div class="row">
       <input type="submit" value="Upload">
     </div>
   </form>
 </main>
+
+<style>
+  #upload-page form {
+    
+  }
+  
+  #upload-page form .row {
+    padding: 1em
+  }
+  
+  #upload-page form .row label {
+    display: block;
+    font-weight: bold;
+  }
+  
+  #upload-page form #metadata {
+    width: 24em;
+    height: 16em;
+  }
+</style>
+  
+<script>
+  const htmlMetadata = document.getElementById('metadata');
+  const htmlMetadataStatus = document.getElementById('metadata-status');
+  
+  function checkMetadata() {
+    const metadata = htmlMetadata.value;
+    
+    try {
+      const json = JSON.parse(metadata);
+      htmlMetadataStatus.textContent = 'JSON OK';
+    } catch (err) {
+      htmlMetadataStatus.textContent = 'Invalid JSON: ' + err;
+    }
+  }
+  
+  htmlMetadata.onkeyup = checkMetadata;
+  htmlMetadata.onblur = checkMetadata;
+  htmlMetadata.onpaste = checkMetadata;
+  checkMetadata();
+</script>
