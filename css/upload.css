@@ -1,0 +1,23 @@
+#upload-page form {
+  border: 1px solid #ccc;
+  padding: 0.5em;
+}
+
+#upload-page form .row {
+  padding: 0.5em
+}
+
+#upload-page form .row label {
+  display: block;
+  font-weight: bold;
+}
+
+#upload-page form #metadata {
+  width: 24em;
+  height: 16em;
+}
+
+#upload-page form #metadata-status {
+  display: block;
+  color: #888;
+}
