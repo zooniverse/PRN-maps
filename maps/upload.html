@@ -4,9 +4,9 @@
 <link rel="stylesheet" type="text/css" href="/css/upload.css">
 
 <main id="upload-page">
-  <form>
+  <form method="post" action="https://maps-api.planetaryresponsenetwork.org/uploads">
     <div class="row">
-      <label>Metadata</label>
+      <label for="metadata">Metadata</label>
 <textarea id="metadata" name="metadata">
 {
   "key1": "value1",
@@ -16,8 +16,8 @@
       <span id="metadata-status"></span>
     </div>
     <div class="row">
-      <label>Files</label>
-      <input name="data" type="file" accept=".csv, .json" multiple>
+      <label for="data">Files</label>
+      <input id="data" name="data" type="file" accept=".csv, .json" multiple>
     </div>
     <div class="row">
       <input id="submit-button" type="button" value="Upload">

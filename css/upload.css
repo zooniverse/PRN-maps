@@ -21,3 +21,10 @@
   display: block;
   color: #888;
 }
+
+#upload-page form #submit-button {
+  display: inline-block;
+  background: #4c8;
+  color: #fff;
+  padding: 0.5em 1em;
+}

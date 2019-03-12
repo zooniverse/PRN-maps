@@ -15,6 +15,7 @@ function checkMetadata() {
 
 function submit() {
   console.log('PLACEHOLDER: DATA SUBMISSION');
+  console.log('Either replace this button with a button.type=submit or hook up submit() to the API.')
 }
 
 htmlMetadata.onkeyup = checkMetadata;
