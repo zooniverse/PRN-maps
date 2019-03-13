@@ -3,26 +3,26 @@
   padding: 0.5em;
 }
 
-#upload-page form .row {
+#upload-page .row {
   padding: 0.5em
 }
 
-#upload-page form .row label {
+#upload-page .row label {
   display: block;
   font-weight: bold;
 }
 
-#upload-page form #metadata {
+#upload-page #metadata {
   width: 24em;
   height: 16em;
 }
 
-#upload-page form #metadata-status {
+#upload-page #metadata-status {
   display: block;
   color: #888;
 }
 
-#upload-page form #submit-button {
+#upload-page #submit-button {
   display: inline-block;
   background: #4c8;
   color: #fff;
