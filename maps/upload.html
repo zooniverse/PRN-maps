@@ -6,6 +6,11 @@
 <main id="upload-page">
   <form method="post" action="https://maps-api.planetaryresponsenetwork.org/uploads">
     <div class="row">
+      <label for="metadata" for="event">Event Name</label>
+      <select id="event" name="event"></select>
+    </div>
+    
+    <div class="row">
       <label for="metadata">Metadata</label>
 <textarea id="metadata" name="metadata">
 {
