@@ -20,7 +20,7 @@ const API = {
     })
     .catch(function (error) {
       console.error(error);
-      return defaultValue;
+      return error;
     });
   },
   approve: function (eventName) {

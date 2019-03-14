@@ -6,8 +6,8 @@
 <main id="upload-page">
   <section>
     <div class="row">
-      <label for="metadata" for="event">Event Name</label>
-      <select id="event" name="event"></select>
+      <label for="metadata" for="event-list">Event Name</label>
+      <select id="event-list" name="event-list"></select>
     </div>
   </section>
   
@@ -33,7 +33,10 @@
       <input id="layers-files" name="layers[]" type="file" accept=".csv" multiple>
     </div>
     <div class="row">
-      <input id="submit-button" type="submit" value="Upload">
+      <input id="submit-button" type="button" value="Upload">
+    </div>
+    <div class="row">
+      <span id="status-text"></span>
     </div>
   </form>
 </main>

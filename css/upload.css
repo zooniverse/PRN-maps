@@ -12,13 +12,7 @@
   font-weight: bold;
 }
 
-#upload-page #metadata {
-  width: 24em;
-  height: 16em;
-}
-
-#upload-page #metadata-status {
-  display: block;
+#upload-page #status-text {
   color: #888;
 }
 
