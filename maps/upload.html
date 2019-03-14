@@ -12,6 +12,7 @@
   </section>
   
   <form id="upload-form" method="post" action="#" enctype="multipart/form-data">
+    <!--
     <div class="row">
       <label for="metadata">Metadata</label>
 <textarea id="metadata" name="metadata">
@@ -22,12 +23,13 @@
 </textarea>
       <span id="metadata-status"></span>
     </div>
+    -->
     <div class="row">
       <label for="data">Files</label>
       <input id="data" name="data" type="file" accept=".csv, .json" multiple>
     </div>
     <div class="row">
-      <input id="submit-button" type="button" value="Upload">
+      <input id="submit-button" type="submit" value="Upload">
     </div>
   </form>
 </main>
