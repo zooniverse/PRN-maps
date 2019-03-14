@@ -58,11 +58,23 @@ function submit() {
   
   // Send!
   request.then(function onUploadComplete(res) {
-    htmlStatusText.textContent = '[Upload Complete] ' + res;
+    console.log('onUploadComplete', res);
+    
+    if (!res.ok) {
+      throw 'General Error - server returned ' + res.status;
+    }
+    
+    htmlStatusText.textContent = '[Upload Complete] All OK!';
   })
   .catch(function onUploadError(err) {
-    console.log('+++ ERR: ', err);
-    htmlStatusText.textContent = '[Upload Error] ' + err;
+    let errorMessage = err;
+    
+    if (err.response && err.response.body && err.response.body.errors) {
+      errorMessage = err.response.body.errors.join(' ; ');
+    }
+    
+    console.error('onUploadError: ', err);
+    htmlStatusText.textContent = '[Upload Error] ' + errorMessage;
   });
 }
 
