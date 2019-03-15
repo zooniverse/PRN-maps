@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<title>Planetary Response Network: file uploader</title>
+<link rel="stylesheet" type="text/css" href="/css/main.css">
+<link rel="stylesheet" type="text/css" href="/css/upload.css">
+
+<main id="upload-page">
+  <section>
+    <div class="row">
+      <label for="metadata" for="event-list">Event Name</label>
+      <select id="event-list" name="event-list"></select>
+    </div>
+  </section>
+  
+  <form id="upload-form" method="post" action="#" enctype="multipart/form-data">
+    <div class="row">
+      <label for="metadata-file">Metadata File (JSON)</label>
+      <input id="metadata-file" name="metadata" type="file" accept=".json">
+    </div>
+    <div class="row">
+      <label for="layers-files">Layers Files (CSVs)</label>
+      <input id="layers-files" name="layers[]" type="file" accept=".csv" multiple>
+    </div>
+    <div class="row">
+      <input id="submit-button" type="button" value="Upload">
+    </div>
+    <div class="row">
+      <span id="status-text"></span>
+    </div>
+  </form>
+</main>
+
+<script src="/js/superagent.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/upload.js"></script>
