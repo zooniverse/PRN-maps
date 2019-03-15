@@ -4,6 +4,14 @@ const htmlStatusText = document.getElementById('status-text');
 const htmlMetadataFile = document.getElementById('metadata-file');
 const htmlLayersFiles = document.getElementById('layers-files');
 const htmlSubmitButton = document.getElementById('submit-button');
+const htmlAdvancedConsole = document.getElementById('advanced-console');
+
+const advancedAnalytics = {
+  metadata: undefined,
+  layers: undefined,
+  metadataReader: new FileReader(),
+  layersReader: new FileReader(),
+};
 
 function updateFormAction() {
   const eventName = htmlEventList.value;
@@ -65,8 +73,38 @@ function submit() {
   });
 }
 
+/*  Check the selected files to see if they're legit.
+ */
+function readMetadataFile() {
+  advancedAnalytics.metadata = undefined;
+  if (htmlMetadataFile.files[0]) {
+    advancedAnalytics.metadataReader.onloadend = function (data) {
+      advancedAnalytics.metadata = advancedAnalytics.metadataReader.result;
+      updateAdvancedAnalytics();
+    }
+    advancedAnalytics.metadataReader.readAsText(htmlMetadataFile.files[0]);
+  } else {
+    updateAdvancedAnalytics();
+  }
+}
+function readLayersFiles() {
+  
+}
+
+function updateAdvancedAnalytics() {
+  const metadata = advancedAnalytics.metadata;
+  
+  if (metadata) {
+    htmlAdvancedConsole.textContent = metadata;
+  } else {
+    htmlAdvancedConsole.textContent = '';
+  }
+}
+
 // Attach UI events
 htmlSubmitButton.onclick = submit;
+htmlMetadataFile.onchange = readMetadataFile;
+htmlLayersFiles.onchange = readLayersFiles;
 
 // Fetch list of Map Events
 API.events().then(updateEventsList)
