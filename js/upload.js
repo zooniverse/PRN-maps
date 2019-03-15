@@ -3,20 +3,7 @@ const htmlEventList = document.getElementById('event-list');
 const htmlStatusText = document.getElementById('status-text');
 const htmlMetadataFile = document.getElementById('metadata-file');
 const htmlLayersFiles = document.getElementById('layers-files');
-//const htmlMetadata = document.getElementById('metadata');
-//const htmlMetadataStatus = document.getElementById('metadata-status');
 const htmlSubmitButton = document.getElementById('submit-button');
-
-/*function checkMetadata() {
-  const metadata = htmlMetadata.value;
-
-  try {
-    const json = JSON.parse(metadata);
-    htmlMetadataStatus.textContent = 'JSON OK';
-  } catch (err) {
-    htmlMetadataStatus.textContent = 'Invalid JSON: ' + err;
-  }
-}*/
 
 function updateFormAction() {
   const eventName = htmlEventList.value;
@@ -78,12 +65,11 @@ function submit() {
   });
 }
 
-/*htmlMetadata.onkeyup = checkMetadata;
-htmlMetadata.onblur = checkMetadata;
-htmlMetadata.onpaste = checkMetadata;
-checkMetadata();*/
+// Attach UI events
+htmlSubmitButton.onclick = submit;
 
+// Fetch list of Map Events
 API.events().then(updateEventsList)
 htmlEventList.onchange = updateFormAction;
 
-htmlSubmitButton.onclick = submit;
+// GO!
