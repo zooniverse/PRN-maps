@@ -54,9 +54,31 @@ function buildLayerGroup(versionGroup) {
   
   const htmlHeader = document.createElement('h6');
   htmlHeader.textContent = versionGroup.version;
-  htmlGroup.append(htmlHeader);
+  htmlGroup.appendChild(htmlHeader);
   
-  //const htmlApproveButton = document.createElement('button');
+  const htmlSubmenu = document.createElement('div');
+  htmlSubmenu.className = 'submenu';
+  htmlGroup.appendChild(htmlSubmenu);
+  
+  const htmlMetadataLink = document.createElement('a');
+  htmlMetadataLink.className = 'metadata-link';
+  htmlMetadataLink.href = versionGroup.metadata_url;
+  htmlMetadataLink.target = '_blank';
+  htmlMetadataLink.textContent = 'Metadata';
+  htmlSubmenu.appendChild(htmlMetadataLink);
+
+  if (queryParams().pending) {
+    const htmlApproveButton = document.createElement('button');
+    htmlApproveButton.className = 'approve-button';
+    htmlApproveButton.textContent = 'Approve';
+    htmlSubmenu.appendChild(htmlApproveButton);
+    
+    htmlApproveButton.onclick = function() {
+      console.log('!!');
+      htmlApproveButton.textContent = 'Approving...';
+      htmlApproveButton.onclick = undefined;
+    };
+  }
   
   versionGroup.layers
     .map(buildLayerInput)
@@ -130,7 +152,6 @@ function parseMapData(results, url) {
 
 function cacheMapData(results, file) {
   const url = file.streamer._input;
-  console.log(url)
   HEATMAP_DATA[url] = url ? results : undefined;
   parseMapData(results, url); 
 }
@@ -142,7 +163,6 @@ function readMapFile(url) {
     skipEmptyLines: true,
     chunk: cacheMapData
   }
-  console.log(url)
   Papa.parse(url, config);
 }
 
