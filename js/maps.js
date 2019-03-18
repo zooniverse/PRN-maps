@@ -40,6 +40,29 @@ function queryParams() {
   }, {});
 }
 
+function buildLayersMenu(layers) {
+  document.querySelectorAll('#map-select label').forEach(function (node) {
+    MAP_SELECT.removeChild(node);
+  });
+  layers
+    .map(buildLayerGroup)
+    .forEach(function (htmlGroup) { MAP_SELECT.appendChild(htmlGroup) });
+}
+function buildLayerGroup(versionGroup) {
+  const htmlGroup = document.createElement('div');
+  
+  const htmlHeader = document.createElement('h6');
+  htmlHeader.textContent = versionGroup.version;
+  htmlGroup.append(htmlHeader);
+  
+  //const htmlApproveButton = document.createElement('button');
+  
+  versionGroup.layers
+    .map(buildLayerInput)
+    .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
+  
+  return htmlGroup;
+}
 function buildLayerInput(layer) {
   const option = document.createElement('label');
   const checkbox = document.createElement('input');
@@ -50,16 +73,6 @@ function buildLayerInput(layer) {
   option.appendChild(checkbox)
   option.appendChild(text);
   return option;
-}
-function buildLayersMenu(layers) {
-  document.querySelectorAll('#map-select label').forEach(function (node) {
-    MAP_SELECT.removeChild(node);
-  });
-  layers
-    .map(buildLayerInput)
-    .forEach(function (input) {
-      MAP_SELECT.appendChild(input);
-    });
 }
 
 const eventName = queryParams().event
