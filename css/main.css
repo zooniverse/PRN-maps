@@ -13,9 +13,21 @@ body {
   grid-gap: .5em;
 }
 
+
+#map-select .group {
+  border: 1px solid #ccc;
+  padding: 0.5em;
+  margin-bottom: 0.5em
+}
+#map-select h6 {
+  padding: 0;
+  margin: 0.5em 0;
+}
 #map-select label {
   display: block;
 }
+
+
 #map {
   height: 95vh;
   width: 100%;

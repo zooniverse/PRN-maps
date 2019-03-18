@@ -41,7 +41,7 @@ function queryParams() {
 }
 
 function buildLayersMenu(layers) {
-  document.querySelectorAll('#map-select label').forEach(function (node) {
+  document.querySelectorAll('#map-select .group').forEach(function (node) {
     MAP_SELECT.removeChild(node);
   });
   layers
@@ -50,6 +50,7 @@ function buildLayersMenu(layers) {
 }
 function buildLayerGroup(versionGroup) {
   const htmlGroup = document.createElement('div');
+  htmlGroup.className = 'group';
   
   const htmlHeader = document.createElement('h6');
   htmlHeader.textContent = versionGroup.version;
