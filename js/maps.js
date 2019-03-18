@@ -74,9 +74,20 @@ function buildLayerGroup(versionGroup) {
     htmlSubmenu.appendChild(htmlApproveButton);
     
     htmlApproveButton.onclick = function() {
-      console.log('!!');
       htmlApproveButton.textContent = 'Approving...';
       htmlApproveButton.onclick = undefined;
+      
+      API.approve(eventName, versionGroup.version)
+        .then(function (res) {
+          if (!res.ok) {
+            throw 'General Error - server returned ' + res.status;
+          }
+          htmlApproveButton.textContent = 'DONE!';
+        })
+        .catch(function (err) {
+          console.error(err);
+          htmlApproveButton.textContent = 'ERROR';
+        });
     };
   }
   

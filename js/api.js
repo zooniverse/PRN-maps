@@ -23,8 +23,8 @@ const API = {
       return error;
     });
   },
-  approve: function (eventName) {
-    return API.post(`/pending/layers/${eventName}/approve`);
+  approve: function (eventName, versionGroup) {
+    return API.post(`/pending/layers/${eventName}/approve/${versionGroup}`);
   },
   events: function () {
     return API.get('/events', []);
