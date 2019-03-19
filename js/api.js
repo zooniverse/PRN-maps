@@ -32,8 +32,8 @@ const API = {
   layers: function (eventName) {
     return API.get(`/layers/${eventName}`, []);
   },
-  manifests: function (eventName) {
-    return API.get(`/manifests/${eventName}`, {});
+  event: function (eventName) {
+    return API.get(`/events/${eventName}`, {});
   },
   pendingLayers: function (eventName) {
     return API.get(`/pending/layers/${eventName}`, []);
