@@ -111,15 +111,9 @@ function buildLayerInput(layer) {
 
 const eventName = queryParams().event
 const getLayers = queryParams().pending ? 'pendingLayers' : 'layers';
-API[getLayers](eventName)
-  .then(buildLayersMenu)
-  .then(renderMapAndFit);
 
 const center = new google.maps.LatLng(15.231458142,-61.2507115);
 const map = new google.maps.Map(MAP_CONTAINER, Object.assign(MAP_OPTIONS, { center }));
-
-let bounds;
-let fitToBounds = false;
 
 function minimumWeight([lat, lng, weight]) {
   const threshold = parseInt(MAP_THRESHOLD.value);
@@ -128,7 +122,6 @@ function minimumWeight([lat, lng, weight]) {
 
 function parseLine([lat, lng, weight]) {
   const location = new google.maps.LatLng(lat, lng);
-  bounds.extend(location);
   return { location, weight };
 }
 
@@ -149,14 +142,8 @@ function parseMapData(results, url) {
     maxIntensity: 30,
     opacity: 1
   });
-  bounds  = new google.maps.LatLngBounds();
   const heatmapData = filteredMapData(results);
   heatmap.setData(heatmapData);
-  if (fitToBounds) {
-    map.fitBounds(bounds);
-    map.panToBounds(bounds);
-    fitToBounds = false;
-  }
   heatmap.setMap(map);
   HEATMAPS[url] = url ? heatmap : undefined;
 }
@@ -196,9 +183,20 @@ function renderMap() {
 }
 
 function renderMapAndFit() {
-  fitToBounds = true;
   renderMap();
+  API.event(eventName)
+  .then(function (event) {
+    const SW = new google.maps.LatLng(event.bounding_box_coords[1], event.bounding_box_coords[0]);
+    const NE = new google.maps.LatLng(event.bounding_box_coords[3], event.bounding_box_coords[2])
+    const bounds  = new google.maps.LatLngBounds(SW, NE);
+    map.fitBounds(bounds);
+    map.panToBounds(bounds);
+  })
 }
 
-MAP_SELECT.addEventListener('change', renderMapAndFit);
+MAP_SELECT.addEventListener('change', renderMap);
 MAP_THRESHOLD.addEventListener('change', renderMap);
+
+API[getLayers](eventName)
+  .then(buildLayersMenu)
+  .then(renderMapAndFit);
