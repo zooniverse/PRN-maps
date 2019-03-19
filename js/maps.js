@@ -40,6 +40,63 @@ function queryParams() {
   }, {});
 }
 
+function buildLayersMenu(layers) {
+  document.querySelectorAll('#map-select .group').forEach(function (node) {
+    MAP_SELECT.removeChild(node);
+  });
+  layers
+    .map(buildLayerGroup)
+    .forEach(function (htmlGroup) { MAP_SELECT.appendChild(htmlGroup) });
+}
+function buildLayerGroup(versionGroup) {
+  const htmlGroup = document.createElement('div');
+  htmlGroup.className = 'group';
+  
+  const htmlHeader = document.createElement('h6');
+  htmlHeader.textContent = versionGroup.version;
+  htmlGroup.appendChild(htmlHeader);
+  
+  const htmlSubmenu = document.createElement('div');
+  htmlSubmenu.className = 'submenu';
+  htmlGroup.appendChild(htmlSubmenu);
+  
+  const htmlMetadataLink = document.createElement('a');
+  htmlMetadataLink.className = 'metadata-link';
+  htmlMetadataLink.href = versionGroup.metadata_url;
+  htmlMetadataLink.target = '_blank';
+  htmlMetadataLink.textContent = 'Metadata';
+  htmlSubmenu.appendChild(htmlMetadataLink);
+
+  if (queryParams().pending) {
+    const htmlApproveButton = document.createElement('button');
+    htmlApproveButton.className = 'approve-button';
+    htmlApproveButton.textContent = 'Approve';
+    htmlSubmenu.appendChild(htmlApproveButton);
+    
+    htmlApproveButton.onclick = function() {
+      htmlApproveButton.textContent = 'Approving...';
+      htmlApproveButton.onclick = undefined;
+      
+      API.approve(eventName, versionGroup.version)
+        .then(function (res) {
+          if (!res.ok) {
+            throw 'General Error - server returned ' + res.status;
+          }
+          htmlApproveButton.textContent = 'DONE!';
+        })
+        .catch(function (err) {
+          console.error(err);
+          htmlApproveButton.textContent = 'ERROR';
+        });
+    };
+  }
+  
+  versionGroup.layers
+    .map(buildLayerInput)
+    .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
+  
+  return htmlGroup;
+}
 function buildLayerInput(layer) {
   const option = document.createElement('label');
   const checkbox = document.createElement('input');
@@ -50,16 +107,6 @@ function buildLayerInput(layer) {
   option.appendChild(checkbox)
   option.appendChild(text);
   return option;
-}
-function buildLayersMenu(layers) {
-  document.querySelectorAll('#map-select label').forEach(function (node) {
-    MAP_SELECT.removeChild(node);
-  });
-  layers
-    .map(buildLayerInput)
-    .forEach(function (input) {
-      MAP_SELECT.appendChild(input);
-    });
 }
 
 const eventName = queryParams().event
@@ -116,7 +163,6 @@ function parseMapData(results, url) {
 
 function cacheMapData(results, file) {
   const url = file.streamer._input;
-  console.log(url)
   HEATMAP_DATA[url] = url ? results : undefined;
   parseMapData(results, url); 
 }
@@ -128,7 +174,6 @@ function readMapFile(url) {
     skipEmptyLines: true,
     chunk: cacheMapData
   }
-  console.log(url)
   Papa.parse(url, config);
 }
 
