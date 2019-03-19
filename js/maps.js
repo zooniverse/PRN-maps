@@ -78,14 +78,31 @@ function buildLayerGroup(versionGroup) {
       htmlApproveButton.onclick = undefined;
       
       API.approve(eventName, versionGroup.version)
-        .then(function (res) {
-          if (!res.ok) {
-            throw 'General Error - server returned ' + res.status;
-          }
+        .then(function (response) {
+          // any reason to display the 201 response json here? Looks like:
+          // [{
+          // 	"name": "metadata",
+          // 	"url": "https://planetary-response-network.s3.amazonaws.com/events/dominica_2018_demo/layers/approved/v2/metadata.json"
+          // }, {
+          // 	"name": "overlay_0",
+          // 	"url": "https://planetary-response-network.s3.amazonaws.com/events/dominica_2018_demo/layers/approved/v2/overlay_0.csv"
+          // }, {
+          // 	"name": "overlay_1",
+          // 	"url": "https://planetary-response-network.s3.amazonaws.com/events/dominica_2018_demo/layers/approved/v2/overlay_1.csv"
+          // }, {
+          // 	"name": "overlay_2",
+          // 	"url": "https://planetary-response-network.s3.amazonaws.com/events/dominica_2018_demo/layers/approved/v2/overlay_2.csv"
+          // }, {
+          // 	"name": "overlay_3",
+          // 	"url": "https://planetary-response-network.s3.amazonaws.com/events/dominica_2018_demo/layers/approved/v2/overlay_3.csv"
+          // }]
+
+          // I think this has to reflect on the response obj here to decide what todo
+          // its either the body and all good
           htmlApproveButton.textContent = 'DONE!';
-        })
-        .catch(function (err) {
-          console.error(err);
+
+          // OR it's an error response object
+          // console.error(err);
           htmlApproveButton.textContent = 'ERROR';
         });
     };
