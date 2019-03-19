@@ -111,9 +111,6 @@ function buildLayerInput(layer) {
 
 const eventName = queryParams().event
 const getLayers = queryParams().pending ? 'pendingLayers' : 'layers';
-API[getLayers](eventName)
-  .then(buildLayersMenu)
-  .then(renderMapAndFit);
 
 const center = new google.maps.LatLng(15.231458142,-61.2507115);
 const map = new google.maps.Map(MAP_CONTAINER, Object.assign(MAP_OPTIONS, { center }));
@@ -197,5 +194,9 @@ function renderMapAndFit() {
   })
 }
 
-MAP_SELECT.addEventListener('change', renderMapAndFit);
+MAP_SELECT.addEventListener('change', renderMap);
 MAP_THRESHOLD.addEventListener('change', renderMap);
+
+API[getLayers](eventName)
+  .then(buildLayersMenu)
+  .then(renderMapAndFit);
