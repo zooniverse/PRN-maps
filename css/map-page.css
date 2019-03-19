@@ -4,11 +4,15 @@
   grid-gap: .5em;
 }
 
-
-#map-select .group {
+#map-controls {}
+#map-select {
   border: 1px solid #ccc;
   padding: 0.5em;
-  margin-bottom: 0.5em
+  margin-bottom: 0.5em;
+}
+#map-select .group {
+  padding: 0.5em;
+  margin-bottom: 0.5em;
 }
 #map-select h6 {
   padding: 0;

@@ -49,10 +49,10 @@ function buildLayersMenu(layers) {
     .forEach(function (htmlGroup) { MAP_SELECT.appendChild(htmlGroup) });
 }
 function buildLayerGroup(versionGroup) {
-  const htmlGroup = document.createElement('div');
+  const htmlGroup = document.createElement('fieldset');
   htmlGroup.className = 'group';
   
-  const htmlHeader = document.createElement('h6');
+  const htmlHeader = document.createElement('legend');
   htmlHeader.textContent = versionGroup.version;
   htmlGroup.appendChild(htmlHeader);
   
