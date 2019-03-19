@@ -79,30 +79,10 @@ function buildLayerGroup(versionGroup) {
       
       API.approve(eventName, versionGroup.version)
         .then(function (response) {
-          // any reason to display the 201 response json here? Looks like:
-          // [{
-          // 	"name": "metadata",
-          // 	"url": "https://planetary-response-network.s3.amazonaws.com/events/dominica_2018_demo/layers/approved/v2/metadata.json"
-          // }, {
-          // 	"name": "overlay_0",
-          // 	"url": "https://planetary-response-network.s3.amazonaws.com/events/dominica_2018_demo/layers/approved/v2/overlay_0.csv"
-          // }, {
-          // 	"name": "overlay_1",
-          // 	"url": "https://planetary-response-network.s3.amazonaws.com/events/dominica_2018_demo/layers/approved/v2/overlay_1.csv"
-          // }, {
-          // 	"name": "overlay_2",
-          // 	"url": "https://planetary-response-network.s3.amazonaws.com/events/dominica_2018_demo/layers/approved/v2/overlay_2.csv"
-          // }, {
-          // 	"name": "overlay_3",
-          // 	"url": "https://planetary-response-network.s3.amazonaws.com/events/dominica_2018_demo/layers/approved/v2/overlay_3.csv"
-          // }]
-
-          // I think this has to reflect on the response obj here to decide what todo
-          // its either the body and all good
+          // Should we clear the approved layer on this map / force a page reload?
           htmlApproveButton.textContent = 'DONE!';
-
-          // OR it's an error response object
-          // console.error(err);
+        })
+        .catch(function (err) {
           htmlApproveButton.textContent = 'ERROR';
         });
     };
