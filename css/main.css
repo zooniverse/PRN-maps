@@ -1,3 +1,7 @@
+* {
+  box-sizing: border-box;
+}
+
 body {
   font-family: sans-serif;
   background: #fffefd;
@@ -7,39 +11,6 @@ body {
   line-height: 1.5;
 }
 
-#map-page {
-  display: grid;
-  grid-template-columns: 1fr 4fr;
-  grid-gap: .5em;
-}
-
-
-#map-select .group {
-  border: 1px solid #ccc;
-  padding: 0.5em;
-  margin-bottom: 0.5em
-}
-#map-select h6 {
-  padding: 0;
-  margin: 0.5em 0;
-}
-#map-select label {
-  display: block;
-}
-#map-select .submenu {
-  background: #ccc;
-  padding: 0.25em;
-  display: flex;
-}
-#map-select .submenu * {
-  flex: 1 1 auto;
-}
-#map-select .submenu .metadata-link {}
-#map-select .submenu .approve-button {}
-
-
-#map {
-  height: 95vh;
-  width: 100%;
-  background: #ccc;
+a {
+  color: #00979d;
 }
