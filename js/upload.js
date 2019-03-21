@@ -5,6 +5,17 @@ const htmlMetadataFile = document.getElementById('metadata-file');
 const htmlLayersFiles = document.getElementById('layers-files');
 const htmlSubmitButton = document.getElementById('submit-button');
 
+// TODO: move this into a helper library.
+function queryParams() {
+  const queryString = window.location.search.substring(1);
+  const queryPairs = queryString.split('&');
+  return queryPairs.reduce(function (query, queryPair) {
+    const [param, value] = queryPair.split('=');
+    query[param] = value;
+    return query;
+  }, {});
+}
+
 function updateFormAction() {
   const eventName = htmlEventList.value;
   const url = API.host + '/upload/layers/' + eventName;
@@ -14,15 +25,16 @@ function updateFormAction() {
 }
 
 function updateEventsList(events) {
+  const eventName = queryParams().event || events[0].name;
+
   events.forEach(function (event, index) {
     const newOption = document.createElement('option');
     newOption.value = event.name;
     newOption.textContent = event.name;
+    newOption.selected = event.name === eventName;
     
     htmlEventList.appendChild(newOption);
   });
-  
-  htmlEventList.selectedIndex = 0;
   updateFormAction();
 }
 
