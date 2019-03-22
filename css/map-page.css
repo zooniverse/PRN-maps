@@ -31,6 +31,9 @@
 }
 #map-select .submenu .metadata-link {}
 #map-select .submenu .approve-button {}
+#zoom-to-fit {
+  width: 100%;
+}
 
 
 #map {
