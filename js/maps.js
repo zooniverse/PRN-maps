@@ -1,6 +1,7 @@
 const MAP_CONTAINER = document.getElementById('map');
 const MAP_THRESHOLD = document.getElementById('map-threshold');
 const MAP_SELECT = document.getElementById('map-select');
+const ZOOM_TO_FIT = document.getElementById('zoom-to-fit');
 const MAP_OPTIONS = {
   zoom: 10,
   mapTypeControl: true,
@@ -164,6 +165,19 @@ function readMapFile(url) {
   Papa.parse(url, config);
 }
 
+function toggleLayer(event) {
+  const url = event.target.value;
+  if (event.target.checked) {
+    if (HEATMAPS[url]) {
+      HEATMAPS[url].setMap(map);
+    } else {
+      readMapFile(url);
+    }
+  } else {
+    HEATMAPS[url] && HEATMAPS[url].setMap(null);
+  }
+}
+
 function renderMap() {
   const urls = Object.keys(HEATMAPS);
   urls.forEach(function (url) {
@@ -194,8 +208,24 @@ function renderMapAndFit() {
   })
 }
 
-MAP_SELECT.addEventListener('change', renderMap);
+function zoomToFit() {
+  const bounds  = new google.maps.LatLngBounds();
+  MAP_SELECT.querySelectorAll('input:checked')
+    .forEach(function (node) {
+      const url = node.value;
+      const data = HEATMAPS[url] && HEATMAPS[url].getData();
+      data.forEach(function (point) {
+        bounds.extend(point.location);
+      });
+    });
+  map.fitBounds(bounds);
+  map.panToBounds(bounds);
+  
+}
+
+MAP_SELECT.addEventListener('change', toggleLayer);
 MAP_THRESHOLD.addEventListener('change', renderMap);
+ZOOM_TO_FIT.addEventListener('click', zoomToFit);
 
 API[getLayers](eventName)
   .then(buildLayersMenu)
