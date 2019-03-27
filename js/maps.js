@@ -224,7 +224,6 @@ const eventName = queryParams().event;
 const pendingLayers = queryParams().pending;
 let getLayerFunc = 'layers';
 let layer = queryParams().layer;
-let zoomFunc = FitEventBounds;
 // pending query param overrides the layer query param
 // layer is used to overide the map to only show
 // a single layer source, e.g. for snapshots
@@ -232,11 +231,15 @@ if (pendingLayers) {
   getLayerFunc = 'pendingLayers';
 } else if (layer) {
   getLayerFunc = 'layer';
-  zoomFunc = zoomToFit;
 }
 
 API[getLayerFunc](eventName, layer)
   .then(buildLayersMenu)
   .then(function () {
-    renderMap(zoomFunc)
+    if (layer) {
+      renderMap(zoomToFit);
+    } else {
+      renderMap();
+      FitEventBounds();
+    }
   });
