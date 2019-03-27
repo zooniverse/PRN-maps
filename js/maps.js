@@ -140,12 +140,13 @@ function cacheMapData(results, file) {
   parseMapData(results, url);
 }
 
-function readMapFile(url) {
+function readMapFile(url, resolver) {
   const config = {
     download: true,
     fastMode: true,
     skipEmptyLines: true,
-    chunk: cacheMapData
+    chunk: cacheMapData,
+    complete: resolver
   }
   Papa.parse(url, config);
 }
@@ -164,21 +165,23 @@ function toggleLayer(event) {
 }
 
 function renderMap() {
-  const urls = Object.keys(HEATMAPS);
-  urls.forEach(function (url) {
-    HEATMAPS[url] && HEATMAPS[url].setMap(null);
-  })
-  MAP_SELECT.querySelectorAll('input:checked')
-    .forEach(function (node) {
-      const url = node.value;
-      if (HEATMAPS[url]) {
-        const heatmapData = filteredMapData(HEATMAP_DATA[url]);
-        HEATMAPS[url].setData(heatmapData);
-        HEATMAPS[url].setMap(map);
-      } else {
-        readMapFile(url);
-      }
+  return new Promise(function (resolve, reject) {
+    const urls = Object.keys(HEATMAPS);
+    urls.forEach(function (url) {
+      HEATMAPS[url] && HEATMAPS[url].setMap(null);
     })
+    MAP_SELECT.querySelectorAll('input:checked')
+      .forEach(function (node) {
+        const url = node.value;
+        if (HEATMAPS[url]) {
+          const heatmapData = filteredMapData(HEATMAP_DATA[url]);
+          HEATMAPS[url].setData(heatmapData);
+          HEATMAPS[url].setMap(map);
+        } else {
+          readMapFile(url, resolve);
+        }
+      })
+  });
 }
 
 function FitEventBounds() {
