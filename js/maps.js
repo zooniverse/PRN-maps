@@ -164,24 +164,22 @@ function toggleLayer(event) {
   }
 }
 
-function renderMap() {
-  return new Promise(function (resolve, reject) {
-    const urls = Object.keys(HEATMAPS);
-    urls.forEach(function (url) {
-      HEATMAPS[url] && HEATMAPS[url].setMap(null);
+function renderMap(resolveFunc) {
+  const urls = Object.keys(HEATMAPS);
+  urls.forEach(function (url) {
+    HEATMAPS[url] && HEATMAPS[url].setMap(null);
+  })
+  MAP_SELECT.querySelectorAll('input:checked')
+    .forEach(function (node) {
+      const url = node.value;
+      if (HEATMAPS[url]) {
+        const heatmapData = filteredMapData(HEATMAP_DATA[url]);
+        HEATMAPS[url].setData(heatmapData);
+        HEATMAPS[url].setMap(map);
+      } else {
+        readMapFile(url, resolveFunc);
+      }
     })
-    MAP_SELECT.querySelectorAll('input:checked')
-      .forEach(function (node) {
-        const url = node.value;
-        if (HEATMAPS[url]) {
-          const heatmapData = filteredMapData(HEATMAP_DATA[url]);
-          HEATMAPS[url].setData(heatmapData);
-          HEATMAPS[url].setMap(map);
-        } else {
-          readMapFile(url, resolve);
-        }
-      })
-  });
 }
 
 function FitEventBounds() {
@@ -239,5 +237,6 @@ if (pendingLayers) {
 
 API[getLayerFunc](eventName, layer)
   .then(buildLayersMenu)
-  .then(renderMap)
-  .then(zoomFunc);
+  .then(function () {
+    renderMap(zoomFunc)
+  });
