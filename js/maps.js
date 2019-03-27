@@ -90,7 +90,6 @@ function buildLayerGroup(versionGroup) {
   return htmlGroup;
 }
 function buildLayerInput(layer) {
-  console.log(layer);
   const option = document.createElement('label');
   const checkbox = document.createElement('input');
   const text = document.createTextNode(layer.name)
@@ -166,7 +165,6 @@ function toggleLayer(event) {
 
 function renderMap() {
   const urls = Object.keys(HEATMAPS);
-  console.log(urls);
   urls.forEach(function (url) {
     HEATMAPS[url] && HEATMAPS[url].setMap(null);
   })
