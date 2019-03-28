@@ -1,3 +1,5 @@
+import { queryParams } from './queryParams.js'
+
 const MAP_CONTAINER = document.getElementById('map');
 const MAP_THRESHOLD = document.getElementById('map-threshold');
 const MAP_SELECT = document.getElementById('map-select');
@@ -30,17 +32,6 @@ HEATMAP_COLOURS = HEATMAP_COLOURS.map(function spreadColours(arr) {
   return [arr[0], arr[1], arr[1], arr[1], arr[2], arr[2], arr[2], arr[2]];
 });
 
-
-function queryParams() {
-  const queryString = window.location.search.substring(1);
-  const queryPairs = queryString.split('&');
-  return queryPairs.reduce(function (query, queryPair) {
-    const [param, value] = queryPair.split('=');
-    query[param] = value;
-    return query;
-  }, {});
-}
-
 function buildLayersMenu(layers) {
   document.querySelectorAll('#map-select .group').forEach(function (node) {
     MAP_SELECT.removeChild(node);
@@ -52,15 +43,15 @@ function buildLayersMenu(layers) {
 function buildLayerGroup(versionGroup) {
   const htmlGroup = document.createElement('fieldset');
   htmlGroup.className = 'group';
-  
+
   const htmlHeader = document.createElement('legend');
   htmlHeader.textContent = versionGroup.version;
   htmlGroup.appendChild(htmlHeader);
-  
+
   const htmlSubmenu = document.createElement('div');
   htmlSubmenu.className = 'submenu';
   htmlGroup.appendChild(htmlSubmenu);
-  
+
   const htmlMetadataLink = document.createElement('a');
   htmlMetadataLink.className = 'metadata-link';
   htmlMetadataLink.href = versionGroup.metadata_url;
@@ -68,16 +59,16 @@ function buildLayerGroup(versionGroup) {
   htmlMetadataLink.textContent = 'Metadata';
   htmlSubmenu.appendChild(htmlMetadataLink);
 
-  if (queryParams().pending) {
+  if (pendingLayers) {
     const htmlApproveButton = document.createElement('button');
     htmlApproveButton.className = 'approve-button';
     htmlApproveButton.textContent = 'Approve';
     htmlSubmenu.appendChild(htmlApproveButton);
-    
+
     htmlApproveButton.onclick = function() {
       htmlApproveButton.textContent = 'Approving...';
       htmlApproveButton.onclick = undefined;
-      
+
       API.approve(eventName, versionGroup.version)
         .then(function (res) {
           if (!res.ok) {
@@ -91,11 +82,11 @@ function buildLayerGroup(versionGroup) {
         });
     };
   }
-  
+
   versionGroup.layers
     .map(buildLayerInput)
     .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
-  
+
   return htmlGroup;
 }
 function buildLayerInput(layer) {
@@ -109,12 +100,6 @@ function buildLayerInput(layer) {
   option.appendChild(text);
   return option;
 }
-
-const eventName = queryParams().event
-const getLayers = queryParams().pending ? 'pendingLayers' : 'layers';
-
-const center = new google.maps.LatLng(15.231458142,-61.2507115);
-const map = new google.maps.Map(MAP_CONTAINER, Object.assign(MAP_OPTIONS, { center }));
 
 function minimumWeight([lat, lng, weight]) {
   const threshold = parseInt(MAP_THRESHOLD.value);
@@ -137,7 +122,7 @@ function parseMapData(results, url) {
   const numberOfHeatmaps = Object.keys(HEATMAPS).length;
   const colourIndex = numberOfHeatmaps % HEATMAP_COLOURS.length;
   const heatmapColour = HEATMAP_COLOURS[colourIndex];
-  
+
   const heatmap = new google.maps.visualization.HeatmapLayer({
     gradient: heatmapColour,
     maxIntensity: 30,
@@ -152,15 +137,16 @@ function parseMapData(results, url) {
 function cacheMapData(results, file) {
   const url = file.streamer._input;
   HEATMAP_DATA[url] = url ? results : undefined;
-  parseMapData(results, url); 
+  parseMapData(results, url);
 }
 
-function readMapFile(url) {
+function readMapFile(url, resolver) {
   const config = {
     download: true,
     fastMode: true,
     skipEmptyLines: true,
-    chunk: cacheMapData
+    chunk: cacheMapData,
+    complete: resolver
   }
   Papa.parse(url, config);
 }
@@ -178,7 +164,7 @@ function toggleLayer(event) {
   }
 }
 
-function renderMap() {
+function renderMap(resolveFunc) {
   const urls = Object.keys(HEATMAPS);
   urls.forEach(function (url) {
     HEATMAPS[url] && HEATMAPS[url].setMap(null);
@@ -191,20 +177,24 @@ function renderMap() {
         HEATMAPS[url].setData(heatmapData);
         HEATMAPS[url].setMap(map);
       } else {
-        readMapFile(url);
+        readMapFile(url, resolveFunc);
       }
     })
 }
 
-function renderMapAndFit() {
-  renderMap();
+function FitEventBounds() {
   API.event(eventName)
   .then(function (event) {
-    const SW = new google.maps.LatLng(event.bounding_box_coords[1], event.bounding_box_coords[0]);
-    const NE = new google.maps.LatLng(event.bounding_box_coords[3], event.bounding_box_coords[2])
-    const bounds  = new google.maps.LatLngBounds(SW, NE);
-    map.fitBounds(bounds);
-    map.panToBounds(bounds);
+    const boundingBoxCoords = event.bounding_box_coords;
+    if (boundingBoxCoords) {
+      const SW = new google.maps.LatLng(boundingBoxCoords[1], boundingBoxCoords[0]);
+      const NE = new google.maps.LatLng(boundingBoxCoords[3], boundingBoxCoords[2]);
+      const bounds  = new google.maps.LatLngBounds(SW, NE);
+      map.fitBounds(bounds);
+      map.panToBounds(bounds);
+    } else {
+      console.log(event);
+    }
   })
 }
 
@@ -220,13 +210,36 @@ function zoomToFit() {
     });
   map.fitBounds(bounds);
   map.panToBounds(bounds);
-  
+
 }
 
 MAP_SELECT.addEventListener('change', toggleLayer);
 MAP_THRESHOLD.addEventListener('change', renderMap);
 ZOOM_TO_FIT.addEventListener('click', zoomToFit);
 
-API[getLayers](eventName)
+const center = new google.maps.LatLng(15.231458142, -61.2507115);
+const map = new google.maps.Map(MAP_CONTAINER, Object.assign(MAP_OPTIONS, { center }));
+
+const eventName = queryParams().event;
+const pendingLayers = queryParams().pending;
+let getLayerFunc = 'layers';
+let layer = queryParams().layer;
+// pending query param overrides the layer query param
+// layer is used to overide the map to only show
+// a single layer source, e.g. for snapshots
+if (pendingLayers) {
+  getLayerFunc = 'pendingLayers';
+} else if (layer) {
+  getLayerFunc = 'layer';
+}
+
+API[getLayerFunc](eventName, layer)
   .then(buildLayersMenu)
-  .then(renderMapAndFit);
+  .then(function () {
+    if (layer) {
+      renderMap(zoomToFit);
+    } else {
+      renderMap();
+      FitEventBounds();
+    }
+  });

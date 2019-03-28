@@ -32,6 +32,9 @@ const API = {
   layers: function (eventName) {
     return API.get(`/layers/${eventName}`, []);
   },
+  layer: function (eventName, layerName) {
+    return API.get(`/layers/${eventName}/${layerName}`, []);
+  },
   event: function (eventName) {
     return API.get(`/events/${eventName}`, {});
   },

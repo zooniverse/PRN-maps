@@ -1,20 +1,11 @@
+import { queryParams } from './queryParams'
+
 const htmlUploadForm = document.getElementById('upload-form');
 const htmlEventList = document.getElementById('event-list');
 const htmlStatusText = document.getElementById('status-text');
 const htmlMetadataFile = document.getElementById('metadata-file');
 const htmlLayersFiles = document.getElementById('layers-files');
 const htmlSubmitButton = document.getElementById('submit-button');
-
-// TODO: move this into a helper library.
-function queryParams() {
-  const queryString = window.location.search.substring(1);
-  const queryPairs = queryString.split('&');
-  return queryPairs.reduce(function (query, queryPair) {
-    const [param, value] = queryPair.split('=');
-    query[param] = value;
-    return query;
-  }, {});
-}
 
 function updateFormAction() {
   const eventName = htmlEventList.value;
