@@ -20,7 +20,7 @@ const API = {
     })
     .catch(function (error) {
       console.error(error);
-      return error;
+      throw error;
     });
   },
   approve: function (eventName, versionGroup) {

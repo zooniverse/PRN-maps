@@ -70,14 +70,11 @@ function buildLayerGroup(versionGroup) {
       htmlApproveButton.onclick = undefined;
 
       API.approve(eventName, versionGroup.version)
-        .then(function (res) {
-          if (!res.ok) {
-            throw 'General Error - server returned ' + res.status;
-          }
+        .then(function (response) {
+          // Should we clear the approved layer on this map / force a page reload?
           htmlApproveButton.textContent = 'DONE!';
         })
         .catch(function (err) {
-          console.error(err);
           htmlApproveButton.textContent = 'ERROR';
         });
     };
