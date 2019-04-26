@@ -47,7 +47,6 @@ function buildLayerGroup(versionGroup) {
   htmlGroup.className = 'group';
 
   const htmlHeader = document.createElement('legend');
-  console.log('+++', versionGroup)
   htmlHeader.textContent = (versionGroup.metadata && versionGroup.metadata.AOI)
     ? versionGroup.metadata.AOI
     : versionGroup.version;
@@ -89,17 +88,23 @@ function buildLayerGroup(versionGroup) {
   }
 
   versionGroup.layers
-    .map(buildLayerInput)
+    .map(function (layer) { return buildLayerInput(layer, versionGroup) })
     .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
 
   return htmlGroup;
 }
 
-function buildLayerInput(layer) {
+function buildLayerInput(layer, versionGroup) {
+  const layerMetadata = (versionGroup && versionGroup.metadata && versionGroup.metadata.layers)
+    ? versionGroup.metadata.layers.find(function (layermeta) { return layer.url.endsWith(`/${layermeta.file_name}`) })
+    : undefined;
+  
   const option = document.createElement('label');
   const checkbox = document.createElement('input');
   const span = document.createElement('span');
-  span.textContent = layer.name;
+  span.textContent = (layerMetadata && layerMetadata.description)
+    ? layerMetadata.description
+    : layer.name;
   checkbox.type='checkbox';
   checkbox.value = layer.url;
   checkbox.checked = true;
