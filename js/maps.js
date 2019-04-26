@@ -47,7 +47,10 @@ function buildLayerGroup(versionGroup) {
   htmlGroup.className = 'group';
 
   const htmlHeader = document.createElement('legend');
-  htmlHeader.textContent = versionGroup.version;
+  console.log('+++', versionGroup)
+  htmlHeader.textContent = (versionGroup.metadata && versionGroup.metadata.AOI)
+    ? versionGroup.metadata.AOI
+    : versionGroup.version;
   htmlGroup.appendChild(htmlHeader);
 
   const htmlSubmenu = document.createElement('div');

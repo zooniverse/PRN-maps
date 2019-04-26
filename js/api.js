@@ -32,31 +32,7 @@ const API = {
   },
   layers: function (eventName) {
     return API.get(`/layers/${eventName}`, [])
-    .then(function (layers) {  // Now fetch metadata for each layer group
-      console.log('+++ LAYERS: ', layers);
-      
-      return Promise.all(layers.map(function (layer) {
-        
-        function mergeLayerAndMetadata(metadata = null) {
-          layer.metadata = metadata; 
-          return layer;
-        }
-        
-        return superagent.get(layer.metadata_url)
-        .then(function (response) {
-          if (response.ok) return JSON.parse(response.text);
-          throw 'ERROR: can\'t get metadata';
-        })
-        .then(function (metadata) {
-          console.log('+++ metadata:', metadata);
-          return mergeLayerAndMetadata(metadata);
-        })
-        .catch(function (err) {
-          return mergeLayerAndMetadata();
-        });
-      }));  // This chain returns the layers, merged with their respective metadata.
-
-    });
+    .then(API.fetchMedataAndMerge);
   },
   layer: function (eventName, layerName) {
     return API.get(`/layers/${eventName}/${layerName}`, []);
@@ -65,6 +41,29 @@ const API = {
     return API.get(`/events/${eventName}`, {});
   },
   pendingLayers: function (eventName) {
-    return API.get(`/pending/layers/${eventName}`, []);
-  }
+    return API.get(`/pending/layers/${eventName}`, [])
+    .then(API.fetchMedataAndMerge);
+  },
+  fetchMedataAndMerge: function (layers) {
+    return Promise.all(layers.map(function (layer) {
+
+      function mergeLayerAndMetadata(metadata = null) {
+        layer.metadata = metadata; 
+        return layer;
+      }
+
+      return superagent.get(layer.metadata_url)
+      .then(function (response) {
+        if (response.ok) return JSON.parse(response.text);
+        throw 'ERROR: can\'t get metadata';
+      })
+      .then(function (metadata) {
+        return mergeLayerAndMetadata(metadata);
+      })
+      .catch(function (err) {
+        return mergeLayerAndMetadata();
+      });
+    }));  // This chain returns the layers, merged with their respective metadata.
+
+  },
 }
