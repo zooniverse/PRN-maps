@@ -43,6 +43,7 @@ function buildLayersMenu(layers) {
 
 function buildLayerGroup(versionGroup) {
   const htmlGroup = document.createElement('fieldset');
+  htmlGroup.id = versionGroup.version;
   htmlGroup.className = 'group';
 
   const htmlHeader = document.createElement('legend');
@@ -85,22 +86,23 @@ function buildLayerGroup(versionGroup) {
   }
 
   versionGroup.layers
-    .map(function(layer) { return buildLayerInput(layer, versionGroup) })
+    .map(buildLayerInput)
     .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
 
   return htmlGroup;
 }
 
-function buildLayerInput(layer, group) {
-  const layerName = layer.name;
+function buildLayerInput(layer) {
   const option = document.createElement('label');
   const checkbox = document.createElement('input');
-  const text = document.createTextNode(layerName)
+  const span = document.createElement('span');
+  span.textContent = layer.name;
   checkbox.type='checkbox';
   checkbox.value = layer.url;
   checkbox.checked = true;
   option.appendChild(checkbox)
-  option.appendChild(text);
+  option.appendChild(span);
+  option.id = layer.name;
   return option;
 }
 
