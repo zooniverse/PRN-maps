@@ -8,7 +8,7 @@ const API = {
     })
     .catch(function (error) {
       console.error(error);
-      return defaultValue;  //Return a default value, don't throw an error
+      return defaultValue;  // Return a default value, don't throw an error
     });
   },
   post: function(path, data) {
@@ -21,7 +21,7 @@ const API = {
     })
     .catch(function (error) {
       console.error(error);
-      throw error;  //Throw an error, let the calling function deal with the issue.
+      throw error;  // Throw an error, let the calling function deal with the issue.
     });
   },
   approve: function (eventName, versionGroup) {
@@ -31,7 +31,19 @@ const API = {
     return API.get('/events', []);
   },
   layers: function (eventName) {
-    return API.get(`/layers/${eventName}`, []);
+    return API.get(`/layers/${eventName}`, [])
+    .then(function (layers) {  // Now fetch metadata for each layer group
+      console.log('+++ LAYERS: ', layers);
+      
+      return Promise.all(layers.map(function (layer) {
+        return Promise.resolve(layer);
+      })).then(function (data) {
+        console.log('+++ And the end result was... ', data);
+        
+        return data;
+      });
+
+    });
   },
   layer: function (eventName, layerName) {
     return API.get(`/layers/${eventName}/${layerName}`, []);
