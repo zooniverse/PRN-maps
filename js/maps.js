@@ -40,6 +40,7 @@ function buildLayersMenu(layers) {
     .map(buildLayerGroup)
     .forEach(function (htmlGroup) { MAP_SELECT.appendChild(htmlGroup) });
 }
+
 function buildLayerGroup(versionGroup) {
   const htmlGroup = document.createElement('fieldset');
   htmlGroup.className = 'group';
@@ -65,34 +66,36 @@ function buildLayerGroup(versionGroup) {
     htmlApproveButton.textContent = 'Approve';
     htmlSubmenu.appendChild(htmlApproveButton);
 
-    htmlApproveButton.onclick = function() {
+    htmlApproveButton.onclick = function (e) {
       htmlApproveButton.textContent = 'Approving...';
-      htmlApproveButton.onclick = undefined;
+      htmlApproveButton.onclick = function (e2) { e2 && e2.preventDefault(); return false };  //Cancel out the approve button
 
       API.approve(eventName, versionGroup.version)
         .then(function (res) {
-          if (!res.ok) {
-            throw 'General Error - server returned ' + res.status;
-          }
           htmlApproveButton.textContent = 'DONE!';
         })
         .catch(function (err) {
           console.error(err);
           htmlApproveButton.textContent = 'ERROR';
         });
+      
+      e && e.preventDefault();
+      return false;
     };
   }
 
   versionGroup.layers
-    .map(buildLayerInput)
+    .map(function(layer) { return buildLayerInput(layer, versionGroup) })
     .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
 
   return htmlGroup;
 }
-function buildLayerInput(layer) {
+
+function buildLayerInput(layer, group) {
+  const layerName = layer.name;
   const option = document.createElement('label');
   const checkbox = document.createElement('input');
-  const text = document.createTextNode(layer.name)
+  const text = document.createTextNode(layerName)
   checkbox.type='checkbox';
   checkbox.value = layer.url;
   checkbox.checked = true;

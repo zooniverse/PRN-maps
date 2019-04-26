@@ -8,7 +8,7 @@ const API = {
     })
     .catch(function (error) {
       console.error(error);
-      return defaultValue;
+      return defaultValue;  //Return a default value, don't throw an error
     });
   },
   post: function(path, data) {
@@ -16,11 +16,12 @@ const API = {
     .send(data)
     .withCredentials()
     .then(function (response) {
-      return JSON.parse(response.text);
+      if (response.ok) return JSON.parse(response.text);
+      throw 'ERROR: can\'t Post';
     })
     .catch(function (error) {
       console.error(error);
-      return error;
+      throw error;  //Throw an error, let the calling function deal with the issue.
     });
   },
   approve: function (eventName, versionGroup) {
