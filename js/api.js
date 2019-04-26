@@ -36,12 +36,25 @@ const API = {
       console.log('+++ LAYERS: ', layers);
       
       return Promise.all(layers.map(function (layer) {
-        return Promise.resolve(layer);
-      })).then(function (data) {
-        console.log('+++ And the end result was... ', data);
         
-        return data;
-      });
+        function mergeLayerAndMetadata(metadata = null) {
+          layer.metadata = metadata; 
+          return layer;
+        }
+        
+        return superagent.get(layer.metadata_url)
+        .then(function (response) {
+          if (response.ok) return JSON.parse(response.text);
+          throw 'ERROR: can\'t get metadata';
+        })
+        .then(function (metadata) {
+          console.log('+++ metadata:', metadata);
+          return mergeLayerAndMetadata(metadata);
+        })
+        .catch(function (err) {
+          return mergeLayerAndMetadata();
+        });
+      }));  // This chain returns the layers, merged with their respective metadata.
 
     });
   },
