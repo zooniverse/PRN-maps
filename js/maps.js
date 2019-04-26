@@ -43,10 +43,13 @@ function buildLayersMenu(layers) {
 
 function buildLayerGroup(versionGroup) {
   const htmlGroup = document.createElement('fieldset');
+  htmlGroup.id = versionGroup.version;
   htmlGroup.className = 'group';
 
   const htmlHeader = document.createElement('legend');
-  htmlHeader.textContent = versionGroup.version;
+  htmlHeader.textContent = (versionGroup.metadata && versionGroup.metadata.AOI)
+    ? versionGroup.metadata.AOI
+    : versionGroup.version;
   htmlGroup.appendChild(htmlHeader);
 
   const htmlSubmenu = document.createElement('div');
@@ -85,22 +88,29 @@ function buildLayerGroup(versionGroup) {
   }
 
   versionGroup.layers
-    .map(function(layer) { return buildLayerInput(layer, versionGroup) })
+    .map(function (layer) { return buildLayerInput(layer, versionGroup) })
     .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
 
   return htmlGroup;
 }
 
-function buildLayerInput(layer, group) {
-  const layerName = layer.name;
+function buildLayerInput(layer, versionGroup) {
+  const layerMetadata = (versionGroup && versionGroup.metadata && versionGroup.metadata.layers)
+    ? versionGroup.metadata.layers.find(function (layermeta) { return layer.url.endsWith(`/${layermeta.file_name}`) })
+    : undefined;
+  
   const option = document.createElement('label');
   const checkbox = document.createElement('input');
-  const text = document.createTextNode(layerName)
+  const span = document.createElement('span');
+  span.textContent = (layerMetadata && layerMetadata.description)
+    ? layerMetadata.description
+    : layer.name;
   checkbox.type='checkbox';
   checkbox.value = layer.url;
   checkbox.checked = true;
   option.appendChild(checkbox)
-  option.appendChild(text);
+  option.appendChild(span);
+  option.id = layer.name;
   return option;
 }
 
