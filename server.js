@@ -15,6 +15,7 @@ app.listen(port, 'localhost', function onStart(err) {
   if (err) {
     console.log(err);
   } else {
-    console.info('==> 🌎 Listening on port %s. Open up http://localhost:%s/ in your browser.', port, port);
+    console.info('==> 🌎 Listening on port %s. Open up http://local.zooniverse.org:%s/ in your browser.', port, port);
+    console.info('Reminder: set your hosts file so local.zooniverse.org points to localhost.');
   }
 });
