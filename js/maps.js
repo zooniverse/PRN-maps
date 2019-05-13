@@ -19,12 +19,12 @@ const HEATMAPS = {};
 const HEATMAP_DATA = {};
 
 let HEATMAP_COLOURS = [  // Pre-set colour gradients for each heatmap
-  ['rgba(204, 068, 068, 0.0)', 'rgba(204, 068, 068, 0.6)', 'rgba(255, 136, 136, 0.6)'],  // Red
-  ['rgba(204, 204, 068, 0.0)', 'rgba(204, 204, 068, 0.6)', 'rgba(255, 255, 136, 0.6)'],  // Yellow
-  ['rgba(068, 204, 204, 0.0)', 'rgba(068, 204, 204, 0.6)', 'rgba(136, 255, 255, 0.6)'],  // Cyan
-  ['rgba(068, 204, 068, 0.0)', 'rgba(068, 204, 068, 0.6)', 'rgba(136, 255, 136, 0.6)'],  // Green
-  ['rgba(204, 068, 204, 0.0)', 'rgba(204, 068, 204, 0.6)', 'rgba(255, 136, 255, 0.6)'],  // Magenta
-  ['rgba(068, 068, 204, 0.0)', 'rgba(068, 068, 204, 0.6)', 'rgba(136, 136, 255, 0.6)'],  // Blue
+  ['rgba(204, 068, 068, 0.0)', 'rgba(204, 068, 068, 0.4)', 'rgba(255, 136, 136, 0.4)'],  // Red
+  ['rgba(204, 204, 068, 0.0)', 'rgba(204, 204, 068, 0.4)', 'rgba(255, 255, 136, 0.4)'],  // Yellow
+  ['rgba(068, 204, 204, 0.0)', 'rgba(068, 204, 204, 0.4)', 'rgba(136, 255, 255, 0.4)'],  // Cyan
+  ['rgba(068, 204, 068, 0.0)', 'rgba(068, 204, 068, 0.4)', 'rgba(136, 255, 136, 0.4)'],  // Green
+  ['rgba(204, 068, 204, 0.0)', 'rgba(204, 068, 204, 0.4)', 'rgba(255, 136, 255, 0.4)'],  // Magenta
+  ['rgba(068, 068, 204, 0.0)', 'rgba(068, 068, 204, 0.4)', 'rgba(136, 136, 255, 0.4)'],  // Blue
 ];
 // Pad the colour gradient to favour the high-intensity colours.
 // We need at least 8 steps in the gradient - the first being transparent - for this to look good.
@@ -102,15 +102,22 @@ function buildLayerInput(layer, versionGroup) {
   const option = document.createElement('label');
   const checkbox = document.createElement('input');
   const span = document.createElement('span');
+  
   span.textContent = (layerMetadata && layerMetadata.description)
     ? layerMetadata.description
     : layer.name;
+  
   checkbox.type='checkbox';
   checkbox.value = layer.url;
   checkbox.checked = true;
+  checkbox.dataset.group = versionGroup.version;
+  checkbox.dataset.layer = layer.name;
+  
   option.appendChild(checkbox)
   option.appendChild(span);
-  option.id = layer.name;
+  option.dataset.group = versionGroup.version;
+  option.dataset.layer = layer.name;
+  
   return option;
 }
 
