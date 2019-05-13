@@ -112,11 +112,13 @@ function buildLayerInput(layer, versionGroup) {
   checkbox.checked = true;
   checkbox.dataset.group = versionGroup.version;
   checkbox.dataset.layer = layer.name;
+  checkbox.dataset.url = layer.url;
   
   option.appendChild(checkbox)
   option.appendChild(span);
   option.dataset.group = versionGroup.version;
   option.dataset.layer = layer.name;
+  option.dataset.url = layer.url;
   
   return option;
 }
@@ -152,6 +154,11 @@ function parseMapData(results, url) {
   heatmap.setData(heatmapData);
   heatmap.setMap(map);
   HEATMAPS[url] = url ? heatmap : undefined;
+  
+  // Update heatmap colour of the selected layer option.
+  const htmlOption = document.querySelector(`label[data-url="${url}"]`);
+  const representativeColour = heatmapColour[heatmapColour.length-1];
+  htmlOption.style.borderRight = `1em solid ${representativeColour}`;
 }
 
 function cacheMapData(results, file) {
