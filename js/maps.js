@@ -94,6 +94,7 @@ function buildLayerInput(layer, versionGroup) {
     ? versionGroup.metadata.layers.find(function (layermeta) { return layer.url.endsWith(`/${layermeta.file_name}`) })
     : undefined;
   
+  const div = document.createElement('div');
   const option = document.createElement('label');
   const checkbox = document.createElement('input');
   const span = document.createElement('span');
@@ -105,17 +106,16 @@ function buildLayerInput(layer, versionGroup) {
   checkbox.type='checkbox';
   checkbox.value = layer.url;
   checkbox.checked = true;
-  checkbox.dataset.group = versionGroup.version;
-  checkbox.dataset.layer = layer.name;
-  checkbox.dataset.url = layer.url;
   
   option.appendChild(checkbox)
   option.appendChild(span);
-  option.dataset.group = versionGroup.version;
-  option.dataset.layer = layer.name;
-  option.dataset.url = layer.url;
+  div.appendChild(option);
   
-  return option;
+  div.dataset.group = versionGroup.version;
+  div.dataset.layer = layer.name;
+  div.dataset.url = layer.url;
+  
+  return div;
 }
 
 function minimumWeight([lat, lng, weight]) {
