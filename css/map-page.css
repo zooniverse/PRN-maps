@@ -4,8 +4,14 @@
   grid-gap: .5em;
 }
 
-#map-controls {}
+#map-controls {
+  display: flex;
+  flex-direction: column;
+  max-height: 100vh;
+}
 #map-select {
+  flex: 1 1 auto;
+  overflow: auto;
   border: 1px solid #ccc;
   padding: 0.5em;
   margin-bottom: 0.5em;
@@ -31,6 +37,11 @@
 }
 #map-select .submenu .metadata-link {}
 #map-select .submenu .approve-button {}
+
+#map-filters {
+  flex: 0 0 auto;
+  padding: 0 1em;
+}
 #zoom-to-fit {
   width: 100%;
 }
