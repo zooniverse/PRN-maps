@@ -18,19 +18,14 @@ const MAP_OPTIONS = {
 const HEATMAPS = {};
 const HEATMAP_DATA = {};
 
-let HEATMAP_COLOURS = [  // Pre-set colour gradients for each heatmap
-  ['rgba(204, 068, 068, 0.0)', 'rgba(204, 068, 068, 0.4)', 'rgba(255, 136, 136, 0.4)'],  // Red
-  ['rgba(204, 204, 068, 0.0)', 'rgba(204, 204, 068, 0.4)', 'rgba(255, 255, 136, 0.4)'],  // Yellow
-  ['rgba(068, 204, 204, 0.0)', 'rgba(068, 204, 204, 0.4)', 'rgba(136, 255, 255, 0.4)'],  // Cyan
-  ['rgba(068, 204, 068, 0.0)', 'rgba(068, 204, 068, 0.4)', 'rgba(136, 255, 136, 0.4)'],  // Green
-  ['rgba(204, 068, 204, 0.0)', 'rgba(204, 068, 204, 0.4)', 'rgba(255, 136, 255, 0.4)'],  // Magenta
-  ['rgba(068, 068, 204, 0.0)', 'rgba(068, 068, 204, 0.4)', 'rgba(136, 136, 255, 0.4)'],  // Blue
+let HEATMAP_GRADIENT = [  // Pre-set colour gradient - provides the best contrast on a predominantly blue-green map.
+  'rgba(255, 0, 0, 0.0)',  // Transparency required as first step to indicate 0-value
+  'rgba(255, 0, 0, 1.0)',  // First step should be at opacity 1.0 so points will be visible at full zoom.
+  'rgba(255, 0, 0, 0.5)',
+  'rgba(255, 64, 64, 0.5)',
+  'rgba(255, 128, 64, 0.5)',
+  'rgba(255, 255, 64, 0.5)',
 ];
-// Pad the colour gradient to favour the high-intensity colours.
-// We need at least 8 steps in the gradient - the first being transparent - for this to look good.
-HEATMAP_COLOURS = HEATMAP_COLOURS.map(function spreadColours(arr) {
-  return [arr[0], arr[1], arr[1], arr[1], arr[2], arr[2], arr[2], arr[2]];
-});
 
 function buildLayersMenu(layers) {
   document.querySelectorAll('#map-select .group').forEach(function (node) {
@@ -142,11 +137,9 @@ function filteredMapData(results) {
 function parseMapData(results, url) {
   // For each heatmap, assign a preset colour to it.
   const numberOfHeatmaps = Object.keys(HEATMAPS).length;
-  const colourIndex = numberOfHeatmaps % HEATMAP_COLOURS.length;
-  const heatmapColour = HEATMAP_COLOURS[colourIndex];
 
   const heatmap = new google.maps.visualization.HeatmapLayer({
-    gradient: heatmapColour,
+    gradient: HEATMAP_GRADIENT,
     maxIntensity: 30,
     opacity: 1
   });
@@ -154,11 +147,6 @@ function parseMapData(results, url) {
   heatmap.setData(heatmapData);
   heatmap.setMap(map);
   HEATMAPS[url] = url ? heatmap : undefined;
-  
-  // Update heatmap colour of the selected layer option.
-  const htmlOption = document.querySelector(`label[data-url="${url}"]`);
-  const representativeColour = heatmapColour[heatmapColour.length-1];
-  htmlOption.style.borderRight = `1em solid ${representativeColour}`;
 }
 
 function cacheMapData(results, file) {
