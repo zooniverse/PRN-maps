@@ -30,8 +30,6 @@ let HEATMAP_GRADIENT = [  // Pre-set colour gradient - provides the best contras
 ];
 
 function buildLayersMenu(layerGroups) {
-  console.log('=== ', layerGroups);
-  
   // Record data in global store.
   HEATMAP_GROUPS = {};
   layerGroups.forEach(function (group) {
@@ -137,6 +135,14 @@ function buildLayerInput(layer, layerGroup) {
   option.appendChild(span);
   div.appendChild(option);
   
+  //Add legends, if any.
+  const legends = (HEATMAP_GROUPS[layerGroup.version] && HEATMAP_GROUPS[layerGroup.version].layers[layer.url])
+    ? HEATMAP_GROUPS[layerGroup.version].layers[layer.url].legend
+    : [];
+  if (legends && legends.length > 0) {
+    // TODO
+  }
+  
   div.dataset.group = layerGroup.version;
   div.dataset.layer = layer.name;
   div.dataset.url = layer.url;
@@ -151,7 +157,7 @@ function minimumWeight([lat, lng, weight]) {
 
 function parseLine([lat, lng, weight]) {
   const location = new google.maps.LatLng(lat, lng);
-  return { location, weight };
+  return { location, weight };  // TODO: tweak weight. Higher the weight, the large it appears on the map.
 }
 
 function filteredMapData(results) {
