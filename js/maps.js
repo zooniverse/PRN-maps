@@ -15,6 +15,8 @@ const MAP_OPTIONS = {
   scaleControl: true,
   streetViewControl: false
 }
+
+var HEATMAP_GROUPS = {};
 const HEATMAPS = {};
 const HEATMAP_DATA = {};
 
@@ -27,24 +29,48 @@ let HEATMAP_GRADIENT = [  // Pre-set colour gradient - provides the best contras
   'rgba(255, 255, 64, 0.5)',
 ];
 
-function buildLayersMenu(layers) {
+function buildLayersMenu(layerGroups) {
+  console.log('=== ', layerGroups);
+  
+  // Record data in global store.
+  HEATMAP_GROUPS = {};
+  layerGroups.forEach(function (group) {
+    let layers = {};
+    group.layers.forEach(function (layer, index) {
+      const metadata = (group.metadata && group.metadata.layers && group.metadata.layers[index]) || {};
+      layers[layer.url] = {
+        name: layer.name,
+        url: layer.url,
+        description: metadata.description,
+        legend: metadata.legend,
+      };
+    })
+    
+    HEATMAP_GROUPS[group.version] = {
+      version: group.version,
+      name: group.metadata.AOI,
+      metadataUrl: group.metadata_url,
+      layers,
+    };
+  });
+  
   document.querySelectorAll('#map-select .group').forEach(function (node) {
     MAP_SELECT.removeChild(node);
   });
-  layers
+  layerGroups
     .map(buildLayerGroup)
     .forEach(function (htmlGroup) { MAP_SELECT.appendChild(htmlGroup) });
 }
 
-function buildLayerGroup(versionGroup) {
+function buildLayerGroup(layerGroup) {
   const htmlGroup = document.createElement('fieldset');
-  htmlGroup.id = versionGroup.version;
+  htmlGroup.id = layerGroup.version;
   htmlGroup.className = 'group';
 
   const htmlHeader = document.createElement('legend');
-  htmlHeader.textContent = (versionGroup.metadata && versionGroup.metadata.AOI)
-    ? versionGroup.metadata.AOI
-    : versionGroup.version;
+  htmlHeader.textContent = (layerGroup.metadata && layerGroup.metadata.AOI)
+    ? layerGroup.metadata.AOI
+    : layerGroup.version;
   htmlGroup.appendChild(htmlHeader);
 
   const htmlSubmenu = document.createElement('div');
@@ -53,7 +79,7 @@ function buildLayerGroup(versionGroup) {
 
   const htmlMetadataLink = document.createElement('a');
   htmlMetadataLink.className = 'metadata-link';
-  htmlMetadataLink.href = versionGroup.metadata_url;
+  htmlMetadataLink.href = layerGroup.metadata_url;
   htmlMetadataLink.target = '_blank';
   htmlMetadataLink.textContent = 'Metadata';
   htmlSubmenu.appendChild(htmlMetadataLink);
@@ -68,7 +94,7 @@ function buildLayerGroup(versionGroup) {
       htmlApproveButton.textContent = 'Approving...';
       htmlApproveButton.onclick = function (e2) { e2 && e2.preventDefault(); return false };  //Cancel out the approve button
 
-      API.approve(eventName, versionGroup.version)
+      API.approve(eventName, layerGroup.version)
         .then(function (res) {
           htmlApproveButton.textContent = 'DONE!';
         })
@@ -82,16 +108,16 @@ function buildLayerGroup(versionGroup) {
     };
   }
 
-  versionGroup.layers
-    .map(function (layer) { return buildLayerInput(layer, versionGroup) })
+  layerGroup.layers
+    .map(function (layer) { return buildLayerInput(layer, layerGroup) })
     .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
 
   return htmlGroup;
 }
 
-function buildLayerInput(layer, versionGroup) {
-  const layerMetadata = (versionGroup && versionGroup.metadata && versionGroup.metadata.layers)
-    ? versionGroup.metadata.layers.find(function (layermeta) { return layer.url.endsWith(`/${layermeta.file_name}`) })
+function buildLayerInput(layer, layerGroup) {
+  const layerMetadata = (layerGroup && layerGroup.metadata && layerGroup.metadata.layers)
+    ? layerGroup.metadata.layers.find(function (layermeta) { return layer.url.endsWith(`/${layermeta.file_name}`) })
     : undefined;
   
   const div = document.createElement('div');
@@ -111,7 +137,7 @@ function buildLayerInput(layer, versionGroup) {
   option.appendChild(span);
   div.appendChild(option);
   
-  div.dataset.group = versionGroup.version;
+  div.dataset.group = layerGroup.version;
   div.dataset.layer = layer.name;
   div.dataset.url = layer.url;
   
