@@ -15,41 +15,63 @@ const MAP_OPTIONS = {
   scaleControl: true,
   streetViewControl: false
 }
+
+var HEATMAP_GROUPS = {};
 const HEATMAPS = {};
 const HEATMAP_DATA = {};
 
-let HEATMAP_COLOURS = [  // Pre-set colour gradients for each heatmap
-  ['rgba(204, 068, 068, 0.0)', 'rgba(204, 068, 068, 0.6)', 'rgba(255, 136, 136, 0.6)'],  // Red
-  ['rgba(204, 204, 068, 0.0)', 'rgba(204, 204, 068, 0.6)', 'rgba(255, 255, 136, 0.6)'],  // Yellow
-  ['rgba(068, 204, 204, 0.0)', 'rgba(068, 204, 204, 0.6)', 'rgba(136, 255, 255, 0.6)'],  // Cyan
-  ['rgba(068, 204, 068, 0.0)', 'rgba(068, 204, 068, 0.6)', 'rgba(136, 255, 136, 0.6)'],  // Green
-  ['rgba(204, 068, 204, 0.0)', 'rgba(204, 068, 204, 0.6)', 'rgba(255, 136, 255, 0.6)'],  // Magenta
-  ['rgba(068, 068, 204, 0.0)', 'rgba(068, 068, 204, 0.6)', 'rgba(136, 136, 255, 0.6)'],  // Blue
+let HEATMAP_GRADIENT = [  // Pre-set colour gradient - provides the best contrast on a predominantly blue-green map.
+  'rgba(255, 0, 0, 0.0)',  // Transparency required as first step to indicate 0-value
+  'rgba(255, 0, 0, 0.5)',  // First step should be at opacity 1.0 so points will be visible at full zoom.
+  'rgba(255, 64, 0, 0.5)',
+  'rgba(255, 128, 0, 0.5)',
+  'rgba(255, 192, 32, 0.5)',
+  'rgba(255, 255, 64, 0.5)',
 ];
-// Pad the colour gradient to favour the high-intensity colours.
-// We need at least 8 steps in the gradient - the first being transparent - for this to look good.
-HEATMAP_COLOURS = HEATMAP_COLOURS.map(function spreadColours(arr) {
-  return [arr[0], arr[1], arr[1], arr[1], arr[2], arr[2], arr[2], arr[2]];
-});
 
-function buildLayersMenu(layers) {
+const VISIBLE_WEIGHT_MULTIPLIER = 5;  // The dots are more visible on the map with a higher weight.
+const VISIBLE_WEIGHT_EXPONENT = 2.5;
+
+function buildLayersMenu(layerGroups) {
+  // Record data in global store.
+  HEATMAP_GROUPS = {};
+  layerGroups.forEach(function (group) {
+    let layers = {};
+    group.layers.forEach(function (layer, index) {
+      const metadata = (group.metadata && group.metadata.layers && group.metadata.layers[index]) || {};
+      layers[layer.url] = {
+        name: layer.name,
+        url: layer.url,
+        description: metadata.description,
+        legend: metadata.legend,
+      };
+    })
+    
+    HEATMAP_GROUPS[group.version] = {
+      version: group.version,
+      name: group.metadata.AOI,
+      metadataUrl: group.metadata_url,
+      layers,
+    };
+  });
+  
   document.querySelectorAll('#map-select .group').forEach(function (node) {
     MAP_SELECT.removeChild(node);
   });
-  layers
+  layerGroups
     .map(buildLayerGroup)
     .forEach(function (htmlGroup) { MAP_SELECT.appendChild(htmlGroup) });
 }
 
-function buildLayerGroup(versionGroup) {
+function buildLayerGroup(layerGroup) {
   const htmlGroup = document.createElement('fieldset');
-  htmlGroup.id = versionGroup.version;
+  htmlGroup.id = layerGroup.version;
   htmlGroup.className = 'group';
 
   const htmlHeader = document.createElement('legend');
-  htmlHeader.textContent = (versionGroup.metadata && versionGroup.metadata.AOI)
-    ? versionGroup.metadata.AOI
-    : versionGroup.version;
+  htmlHeader.textContent = (layerGroup.metadata && layerGroup.metadata.AOI)
+    ? layerGroup.metadata.AOI
+    : layerGroup.version;
   htmlGroup.appendChild(htmlHeader);
 
   const htmlSubmenu = document.createElement('div');
@@ -58,7 +80,7 @@ function buildLayerGroup(versionGroup) {
 
   const htmlMetadataLink = document.createElement('a');
   htmlMetadataLink.className = 'metadata-link';
-  htmlMetadataLink.href = versionGroup.metadata_url;
+  htmlMetadataLink.href = layerGroup.metadata_url;
   htmlMetadataLink.target = '_blank';
   htmlMetadataLink.textContent = 'Metadata';
   htmlSubmenu.appendChild(htmlMetadataLink);
@@ -73,7 +95,7 @@ function buildLayerGroup(versionGroup) {
       htmlApproveButton.textContent = 'Approving...';
       htmlApproveButton.onclick = function (e2) { e2 && e2.preventDefault(); return false };  //Cancel out the approve button
 
-      API.approve(eventName, versionGroup.version)
+      API.approve(eventName, layerGroup.version)
         .then(function (res) {
           htmlApproveButton.textContent = 'DONE!';
         })
@@ -87,41 +109,62 @@ function buildLayerGroup(versionGroup) {
     };
   }
 
-  versionGroup.layers
-    .map(function (layer) { return buildLayerInput(layer, versionGroup) })
+  layerGroup.layers
+    .map(function (layer) { return buildLayerInput(layer, layerGroup) })
     .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
 
   return htmlGroup;
 }
 
-function buildLayerInput(layer, versionGroup) {
-  const layerMetadata = (versionGroup && versionGroup.metadata && versionGroup.metadata.layers)
-    ? versionGroup.metadata.layers.find(function (layermeta) { return layer.url.endsWith(`/${layermeta.file_name}`) })
+function buildLayerInput(layer, layerGroup) {
+  const layerMetadata = (layerGroup && layerGroup.metadata && layerGroup.metadata.layers)
+    ? layerGroup.metadata.layers.find(function (layermeta) { return layer.url.endsWith(`/${layermeta.file_name}`) })
     : undefined;
   
+  const div = document.createElement('div');
   const option = document.createElement('label');
   const checkbox = document.createElement('input');
   const span = document.createElement('span');
+  
   span.textContent = (layerMetadata && layerMetadata.description)
     ? layerMetadata.description
     : layer.name;
+  
   checkbox.type='checkbox';
   checkbox.value = layer.url;
   checkbox.checked = true;
+  
   option.appendChild(checkbox)
   option.appendChild(span);
-  option.id = layer.name;
-  return option;
+  div.appendChild(option);
+  
+  //Add legends, if any.
+  const legends = (HEATMAP_GROUPS[layerGroup.version] && HEATMAP_GROUPS[layerGroup.version].layers[layer.url])
+    ? HEATMAP_GROUPS[layerGroup.version].layers[layer.url].legend
+    : [];
+  if (legends && legends.length > 0) {
+    // TODO
+  }
+  
+  div.dataset.group = layerGroup.version;
+  div.dataset.layer = layer.name;
+  div.dataset.url = layer.url;
+  
+  return div;
 }
 
 function minimumWeight([lat, lng, weight]) {
   const threshold = parseInt(MAP_THRESHOLD.value);
-  return weight > threshold;
+  return weight >= threshold;
 }
 
 function parseLine([lat, lng, weight]) {
   const location = new google.maps.LatLng(lat, lng);
-  return { location, weight };
+  
+  // Actual weight values range from 1-5, so we need to crank that up to make the points visible on the map.
+  const visibleWeight = Math.pow((weight), VISIBLE_WEIGHT_EXPONENT) * VISIBLE_WEIGHT_MULTIPLIER;
+  
+  return { location, weight: visibleWeight };
 }
 
 function filteredMapData(results) {
@@ -133,11 +176,9 @@ function filteredMapData(results) {
 function parseMapData(results, url) {
   // For each heatmap, assign a preset colour to it.
   const numberOfHeatmaps = Object.keys(HEATMAPS).length;
-  const colourIndex = numberOfHeatmaps % HEATMAP_COLOURS.length;
-  const heatmapColour = HEATMAP_COLOURS[colourIndex];
 
   const heatmap = new google.maps.visualization.HeatmapLayer({
-    gradient: heatmapColour,
+    gradient: HEATMAP_GRADIENT,
     maxIntensity: 30,
     opacity: 1
   });

@@ -8,25 +8,28 @@
       <h6>Select a heat map:</h6>
       <fieldset class="group">
         <legend>v0</legend>
-        <label><input type=checkbox value=0>overlay_0.csv</label>
-        <label><input type=checkbox value=1>overlay_1.csv</label>
-        <label><input type=checkbox value=2>overlay_2.csv</label>
-        <label><input type=checkbox value=3>overlay_3.csv</label>
+        <div class="submenu">Loading...</div>
+        <div class="layer">
+          <label><input type=checkbox value=0>overlay_0.csv</label>
+        </div>
+        <button>Toggle group</button>
       </fieldset>
     </form>
-    <label>
-      Threshold:
-      1
-      <input
-        id="map-threshold"
-        type="range"
-        min="1"
-        max="5"
-        value="2"
-      >
-      5
-    </label>
-    <button id="zoom-to-fit">Zoom to fit</button>
+    <div id="map-filters">
+      <label>
+        Threshold:
+        1
+        <input
+          id="map-threshold"
+          type="range"
+          min="1"
+          max="5"
+          value="2"
+        >
+        5
+      </label>
+      <button id="zoom-to-fit">Zoom to fit</button>
+    </div>
   </div>
   <div id="map">
     Loading…
