@@ -211,7 +211,7 @@ function parseMapData(results, url) {
   });
   const heatmapData = filteredMapData(results);
   heatmap.setData(heatmapData);
-  heatmap.setMap(map);
+  heatmap.setMap(GOOGLE_MAP);
   HEATMAPS[url] = url ? heatmap : undefined;
 }
 
@@ -236,7 +236,7 @@ function toggleLayer(event) {
   const url = event.target.value;
   if (event.target.checked) {
     if (HEATMAPS[url]) {
-      HEATMAPS[url].setMap(map);
+      HEATMAPS[url].setMap(GOOGLE_MAP);
     } else {
       readMapFile(url);
     }
@@ -256,7 +256,7 @@ function renderMap(resolveFunc) {
       if (HEATMAPS[url]) {
         const heatmapData = filteredMapData(HEATMAP_DATA[url]);
         HEATMAPS[url].setData(heatmapData);
-        HEATMAPS[url].setMap(map);
+        HEATMAPS[url].setMap(GOOGLE_MAP);
       } else {
         readMapFile(url, resolveFunc);
       }
@@ -287,8 +287,8 @@ function FitEventBounds() {
       const SW = new google.maps.LatLng(boundingBoxCoords[1], boundingBoxCoords[0]);
       const NE = new google.maps.LatLng(boundingBoxCoords[3], boundingBoxCoords[2]);
       const bounds  = new google.maps.LatLngBounds(SW, NE);
-      map.fitBounds(bounds);
-      map.panToBounds(bounds);
+      GOOGLE_MAP.fitBounds(bounds);
+      GOOGLE_MAP.panToBounds(bounds);
     } else {
       console.log(event);
     }
@@ -305,8 +305,8 @@ function zoomToFit() {
         bounds.extend(point.location);
       });
     });
-  map.fitBounds(bounds);
-  map.panToBounds(bounds);
+  GOOGLE_MAP.fitBounds(bounds);
+  GOOGLE_MAP.panToBounds(bounds);
 
 }
 
@@ -315,7 +315,7 @@ MAP_THRESHOLD.addEventListener('change', renderMap);
 ZOOM_TO_FIT.addEventListener('click', zoomToFit);
 
 const center = new google.maps.LatLng(15.231458142, -61.2507115);
-const map = new google.maps.Map(MAP_CONTAINER, Object.assign(MAP_OPTIONS, { center }));
+const GOOGLE_MAP = new google.maps.Map(MAP_CONTAINER, Object.assign(MAP_OPTIONS, { center }));
 
 const eventName = queryParams().event;
 const pendingLayers = queryParams().pending;
