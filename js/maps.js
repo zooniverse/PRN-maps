@@ -124,6 +124,8 @@ function buildLayerGroup(layerGroup) {
     const anySelected = !!checkboxes.find(function (checkbox) { return checkbox.checked });
     checkboxes.forEach(function (checkbox) { checkbox.checked = !anySelected });
     
+    toggleMultipleLayers(version);
+    
     e && e.preventDefault();
     return false;
   };
@@ -161,14 +163,12 @@ function buildLayerInput(layer, layerGroup) {
   if (legends && legends.length > 0) {
     const ol = document.createElement('ol');
     ol.className = 'layer-control-legends';
-    
     legends.forEach(function (legend, index) {
       const li = document.createElement('li');
       li.textContent = legend;
       li.dataset.legendValue = index + 1;
       ol.appendChild(li);
     });
-    
     div.appendChild(ol);
   }
   
@@ -245,6 +245,33 @@ function toggleLayer(event) {
   }
 }
 
+function toggleMultipleLayers(layerGroupVersion) {
+  const checkboxes = Array.from(document.querySelectorAll(`.layer-control[data-group='${layerGroupVersion}'] input[type='checkbox']`));
+  
+  checkboxes.forEach(function (checkbox) {
+    const url = checkbox.value;
+    if (checkbox.checked) {
+      if (HEATMAPS[url]) {
+        HEATMAPS[url].setMap(GOOGLE_MAP);
+      } else {
+        readMapFile(url);
+      }
+    } else {
+      HEATMAPS[url] && HEATMAPS[url].setMap(null);
+    }
+  });
+  
+  /*if (event.target.checked) {
+    if (HEATMAPS[url]) {
+      HEATMAPS[url].setMap(GOOGLE_MAP);
+    } else {
+      readMapFile(url);
+    }
+  } else {
+    HEATMAPS[url] && HEATMAPS[url].setMap(null);
+  }*/
+}
+
 function renderMap(resolveFunc) {
   const urls = Object.keys(HEATMAPS);
   urls.forEach(function (url) {
@@ -274,7 +301,6 @@ function updateMapControlsUI () {
     Array.from(selectedElements).forEach(function (element) {
       if (val >= threshold) element.className = 'selected';
       else element.className = 'unselected';
-      console.log(element);
     });
   }
 }
@@ -307,7 +333,6 @@ function zoomToFit() {
     });
   GOOGLE_MAP.fitBounds(bounds);
   GOOGLE_MAP.panToBounds(bounds);
-
 }
 
 MAP_SELECT.addEventListener('change', toggleLayer);
