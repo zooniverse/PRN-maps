@@ -143,9 +143,20 @@ function buildLayerInput(layer, layerGroup) {
     ? HEATMAP_GROUPS[layerGroup.version].layers[layer.url].legend
     : [];
   if (legends && legends.length > 0) {
-    // TODO
+    const ol = document.createElement('ol');
+    ol.className = 'layer-control-legends';
+    
+    legends.forEach(function (legend, index) {
+      const li = document.createElement('li');
+      li.textContent = legend;
+      li.dataset.legendValue = index + 1;
+      ol.appendChild(li);
+    });
+    
+    div.appendChild(ol);
   }
   
+  div.className = 'layer-control';
   div.dataset.group = layerGroup.version;
   div.dataset.layer = layer.name;
   div.dataset.url = layer.url;
