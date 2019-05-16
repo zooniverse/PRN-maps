@@ -112,6 +112,22 @@ function buildLayerGroup(layerGroup) {
   layerGroup.layers
     .map(function (layer) { return buildLayerInput(layer, layerGroup) })
     .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
+  
+  // Add toggle option
+  const htmlToggle = document.createElement('button');
+  htmlToggle.textContent = 'Toggle group';
+  htmlToggle.onclick = function (e) {
+    const version = layerGroup.version;
+    const checkboxes = Array.from(document.querySelectorAll(`.layer-control[data-group='${version}'] input[type='checkbox']`));
+
+    //If any checkboxes are checked, uncheck them all. Otherwise, check them all.
+    const anySelected = !!checkboxes.find(function (checkbox) { return checkbox.checked });
+    checkboxes.forEach(function (checkbox) { checkbox.checked = !anySelected });
+    
+    e && e.preventDefault();
+    return false;
+  };
+  htmlGroup.appendChild(htmlToggle);
 
   return htmlGroup;
 }
@@ -138,7 +154,7 @@ function buildLayerInput(layer, layerGroup) {
   option.appendChild(span);
   div.appendChild(option);
   
-  //Add legends, if any.
+  // Add legends, if any.
   const legends = (HEATMAP_GROUPS[layerGroup.version] && HEATMAP_GROUPS[layerGroup.version].layers[layer.url])
     ? HEATMAP_GROUPS[layerGroup.version].layers[layer.url].legend
     : [];
