@@ -245,6 +245,22 @@ function renderMap(resolveFunc) {
         readMapFile(url, resolveFunc);
       }
     })
+  updateMapControlsUI();
+}
+
+function updateMapControlsUI () {
+  const threshold = parseInt(MAP_THRESHOLD.value);
+  const thresholdMin = Number.parseInt(MAP_THRESHOLD.min);
+  const thresholdMax = Number.parseInt(MAP_THRESHOLD.max);
+  
+  for (let val = thresholdMin; val <= thresholdMax; val++) {
+    const selectedElements = document.querySelectorAll(`.layer-control-legends li[data-legend-value='${val}']`);
+    Array.from(selectedElements).forEach(function (element) {
+      if (val >= threshold) element.className = 'selected';
+      else element.className = 'unselected';
+      console.log(element);
+    });
+  }
 }
 
 function FitEventBounds() {
