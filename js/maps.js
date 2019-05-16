@@ -22,12 +22,15 @@ const HEATMAP_DATA = {};
 
 let HEATMAP_GRADIENT = [  // Pre-set colour gradient - provides the best contrast on a predominantly blue-green map.
   'rgba(255, 0, 0, 0.0)',  // Transparency required as first step to indicate 0-value
-  'rgba(255, 0, 0, 1.0)',  // First step should be at opacity 1.0 so points will be visible at full zoom.
-  'rgba(255, 0, 0, 0.5)',
-  'rgba(255, 64, 64, 0.5)',
-  'rgba(255, 128, 64, 0.5)',
+  'rgba(255, 0, 0, 0.5)',  // First step should be at opacity 1.0 so points will be visible at full zoom.
+  'rgba(255, 64, 0, 0.5)',
+  'rgba(255, 128, 0, 0.5)',
+  'rgba(255, 192, 32, 0.5)',
   'rgba(255, 255, 64, 0.5)',
 ];
+
+const VISIBLE_WEIGHT_MULTIPLIER = 5;  // The dots are more visible on the map with a higher weight.
+const VISIBLE_WEIGHT_EXPONENT = 2.5;
 
 function buildLayersMenu(layerGroups) {
   // Record data in global store.
@@ -152,12 +155,16 @@ function buildLayerInput(layer, layerGroup) {
 
 function minimumWeight([lat, lng, weight]) {
   const threshold = parseInt(MAP_THRESHOLD.value);
-  return weight > threshold;
+  return weight >= threshold;
 }
 
 function parseLine([lat, lng, weight]) {
   const location = new google.maps.LatLng(lat, lng);
-  return { location, weight };  // TODO: tweak weight. Higher the weight, the large it appears on the map.
+  
+  // Actual weight values range from 1-5, so we need to crank that up to make the points visible on the map.
+  const visibleWeight = Math.pow((weight), VISIBLE_WEIGHT_EXPONENT) * VISIBLE_WEIGHT_MULTIPLIER;
+  
+  return { location, weight: visibleWeight };
 }
 
 function filteredMapData(results) {
