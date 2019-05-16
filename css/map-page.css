@@ -38,6 +38,17 @@
 #map-select .submenu .metadata-link {}
 #map-select .submenu .approve-button {}
 
+.layer-control-legends {
+  padding: 0; margin: 0;
+  font-size: 0.8em;
+}
+.layer-control-legends li {
+  padding: 0;
+  margin: 0 0 0 2em;
+}
+.layer-control-legends li.selected { color: #c84; }
+.layer-control-legends li.unselected { color: #ccc; }
+
 #map-filters {
   flex: 0 0 auto;
   padding: 0 1em;

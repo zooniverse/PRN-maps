@@ -112,6 +112,24 @@ function buildLayerGroup(layerGroup) {
   layerGroup.layers
     .map(function (layer) { return buildLayerInput(layer, layerGroup) })
     .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
+  
+  // Add toggle option
+  const htmlToggle = document.createElement('button');
+  htmlToggle.textContent = 'Toggle group';
+  htmlToggle.onclick = function (e) {
+    const version = layerGroup.version;
+    const checkboxes = Array.from(document.querySelectorAll(`.layer-control[data-group='${version}'] input[type='checkbox']`));
+
+    //If any checkboxes are checked, uncheck them all. Otherwise, check them all.
+    const anySelected = !!checkboxes.find(function (checkbox) { return checkbox.checked });
+    checkboxes.forEach(function (checkbox) { checkbox.checked = !anySelected });
+    
+    toggleMultipleLayers(version);
+    
+    e && e.preventDefault();
+    return false;
+  };
+  htmlGroup.appendChild(htmlToggle);
 
   return htmlGroup;
 }
@@ -138,14 +156,23 @@ function buildLayerInput(layer, layerGroup) {
   option.appendChild(span);
   div.appendChild(option);
   
-  //Add legends, if any.
+  // Add legends, if any.
   const legends = (HEATMAP_GROUPS[layerGroup.version] && HEATMAP_GROUPS[layerGroup.version].layers[layer.url])
     ? HEATMAP_GROUPS[layerGroup.version].layers[layer.url].legend
     : [];
   if (legends && legends.length > 0) {
-    // TODO
+    const ol = document.createElement('ol');
+    ol.className = 'layer-control-legends';
+    legends.forEach(function (legend, index) {
+      const li = document.createElement('li');
+      li.textContent = legend;
+      li.dataset.legendValue = index + 1;
+      ol.appendChild(li);
+    });
+    div.appendChild(ol);
   }
   
+  div.className = 'layer-control';
   div.dataset.group = layerGroup.version;
   div.dataset.layer = layer.name;
   div.dataset.url = layer.url;
@@ -184,7 +211,7 @@ function parseMapData(results, url) {
   });
   const heatmapData = filteredMapData(results);
   heatmap.setData(heatmapData);
-  heatmap.setMap(map);
+  heatmap.setMap(GOOGLE_MAP);
   HEATMAPS[url] = url ? heatmap : undefined;
 }
 
@@ -209,13 +236,40 @@ function toggleLayer(event) {
   const url = event.target.value;
   if (event.target.checked) {
     if (HEATMAPS[url]) {
-      HEATMAPS[url].setMap(map);
+      HEATMAPS[url].setMap(GOOGLE_MAP);
     } else {
       readMapFile(url);
     }
   } else {
     HEATMAPS[url] && HEATMAPS[url].setMap(null);
   }
+}
+
+function toggleMultipleLayers(layerGroupVersion) {
+  const checkboxes = Array.from(document.querySelectorAll(`.layer-control[data-group='${layerGroupVersion}'] input[type='checkbox']`));
+  
+  checkboxes.forEach(function (checkbox) {
+    const url = checkbox.value;
+    if (checkbox.checked) {
+      if (HEATMAPS[url]) {
+        HEATMAPS[url].setMap(GOOGLE_MAP);
+      } else {
+        readMapFile(url);
+      }
+    } else {
+      HEATMAPS[url] && HEATMAPS[url].setMap(null);
+    }
+  });
+  
+  /*if (event.target.checked) {
+    if (HEATMAPS[url]) {
+      HEATMAPS[url].setMap(GOOGLE_MAP);
+    } else {
+      readMapFile(url);
+    }
+  } else {
+    HEATMAPS[url] && HEATMAPS[url].setMap(null);
+  }*/
 }
 
 function renderMap(resolveFunc) {
@@ -229,11 +283,26 @@ function renderMap(resolveFunc) {
       if (HEATMAPS[url]) {
         const heatmapData = filteredMapData(HEATMAP_DATA[url]);
         HEATMAPS[url].setData(heatmapData);
-        HEATMAPS[url].setMap(map);
+        HEATMAPS[url].setMap(GOOGLE_MAP);
       } else {
         readMapFile(url, resolveFunc);
       }
     })
+  updateMapControlsUI();
+}
+
+function updateMapControlsUI () {
+  const threshold = parseInt(MAP_THRESHOLD.value);
+  const thresholdMin = Number.parseInt(MAP_THRESHOLD.min);
+  const thresholdMax = Number.parseInt(MAP_THRESHOLD.max);
+  
+  for (let val = thresholdMin; val <= thresholdMax; val++) {
+    const selectedElements = document.querySelectorAll(`.layer-control-legends li[data-legend-value='${val}']`);
+    Array.from(selectedElements).forEach(function (element) {
+      if (val >= threshold) element.className = 'selected';
+      else element.className = 'unselected';
+    });
+  }
 }
 
 function FitEventBounds() {
@@ -244,8 +313,8 @@ function FitEventBounds() {
       const SW = new google.maps.LatLng(boundingBoxCoords[1], boundingBoxCoords[0]);
       const NE = new google.maps.LatLng(boundingBoxCoords[3], boundingBoxCoords[2]);
       const bounds  = new google.maps.LatLngBounds(SW, NE);
-      map.fitBounds(bounds);
-      map.panToBounds(bounds);
+      GOOGLE_MAP.fitBounds(bounds);
+      GOOGLE_MAP.panToBounds(bounds);
     } else {
       console.log(event);
     }
@@ -262,9 +331,8 @@ function zoomToFit() {
         bounds.extend(point.location);
       });
     });
-  map.fitBounds(bounds);
-  map.panToBounds(bounds);
-
+  GOOGLE_MAP.fitBounds(bounds);
+  GOOGLE_MAP.panToBounds(bounds);
 }
 
 MAP_SELECT.addEventListener('change', toggleLayer);
@@ -272,7 +340,7 @@ MAP_THRESHOLD.addEventListener('change', renderMap);
 ZOOM_TO_FIT.addEventListener('click', zoomToFit);
 
 const center = new google.maps.LatLng(15.231458142, -61.2507115);
-const map = new google.maps.Map(MAP_CONTAINER, Object.assign(MAP_OPTIONS, { center }));
+const GOOGLE_MAP = new google.maps.Map(MAP_CONTAINER, Object.assign(MAP_OPTIONS, { center }));
 
 const eventName = queryParams().event;
 const pendingLayers = queryParams().pending;
