@@ -1,4 +1,4 @@
-const API = {
+export const API = {
   host: 'https://maps-api.planetaryresponsenetwork.org',
   get: function(path, defaultValue) {
     return superagent.get(`${API.host}${path}`)
@@ -66,5 +66,3 @@ const API = {
     }));  // This chain returns the layers, merged with their respective metadata.
   },
 }
-
-export { API };
