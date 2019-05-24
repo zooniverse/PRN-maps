@@ -36,7 +36,6 @@ const VISIBLE_WEIGHT_EXPONENT = 2.5;
 function buildLayersMenu(layerGroups) {
   // Record data in global store.
   HEATMAP_GROUPS = {};
-  console.log(layerGroups)
   layerGroups.forEach(function (group) {
     let layers = {};
     group.layers.forEach(function (layer, index) {
