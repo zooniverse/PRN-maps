@@ -1,5 +1,5 @@
 import { queryParams } from './queryParams.js';
-import { api } from './api.js';
+import { API } from './api.js';
 
 const htmlUploadForm = document.getElementById('upload-form');
 const htmlEventList = document.getElementById('event-list');
@@ -10,7 +10,7 @@ const htmlSubmitButton = document.getElementById('submit-button');
 
 function updateFormAction() {
   const eventName = htmlEventList.value;
-  const url = api().host + '/upload/layers/' + eventName;
+  const url = API.host + '/upload/layers/' + eventName;
   htmlUploadForm.action = url;
 
   htmlStatusText.textContent = 'Files will be uploaded to ' + eventName;
@@ -73,7 +73,7 @@ function submit() {
 htmlSubmitButton.onclick = submit;
 
 // Fetch list of Map Events
-api().events().then(updateEventsList)
+API.events().then(updateEventsList)
 htmlEventList.onchange = updateFormAction;
 
 // GO!

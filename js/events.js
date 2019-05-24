@@ -1,4 +1,4 @@
-import { api } from './api.js';
+import { API } from './api.js';
 
 const EVENTS_LIST = document.getElementById('events');
 function createAnchor(href, textContent) {
@@ -31,5 +31,5 @@ function listEvents(events) {
     });
 }
 
-api().events()
+API.events()
 .then(listEvents)

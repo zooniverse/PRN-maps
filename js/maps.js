@@ -1,5 +1,5 @@
 import { queryParams } from './queryParams.js';
-import { api } from './api.js';
+import { API } from './api.js';
 
 const MAP_CONTAINER = document.getElementById('map');
 const MAP_THRESHOLD = document.getElementById('map-threshold');
@@ -97,7 +97,7 @@ function buildLayerGroup(layerGroup) {
       htmlApproveButton.textContent = 'Approving...';
       htmlApproveButton.onclick = function (e2) { e2 && e2.preventDefault(); return false };  //Cancel out the approve button
 
-      api().approve(eventName, layerGroup.version)
+      API.approve(eventName, layerGroup.version)
         .then(function (res) {
           htmlApproveButton.textContent = 'DONE!';
         })
@@ -308,7 +308,7 @@ function updateMapControlsUI () {
 }
 
 function FitEventBounds() {
-  api().event(eventName)
+  API.event(eventName)
   .then(function (event) {
     const boundingBoxCoords = event.bounding_box_coords;
     if (boundingBoxCoords) {
@@ -357,7 +357,7 @@ if (pendingLayers) {
   getLayerFunc = 'layer';
 }
 
-api()[getLayerFunc](eventName, layer)
+API[getLayerFunc](eventName, layer)
   .then(buildLayersMenu)
   .then(function () {
     if (layer) {

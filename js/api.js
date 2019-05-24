@@ -67,6 +67,4 @@ const API = {
   },
 }
 
-export function api() {
-  return API;
-};
+export { API };
