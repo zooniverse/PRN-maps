@@ -1,4 +1,5 @@
-import { queryParams } from './queryParams.js'
+import { queryParams } from './queryParams.js';
+import { api } from './api.js';
 
 const MAP_CONTAINER = document.getElementById('map');
 const MAP_THRESHOLD = document.getElementById('map-threshold');
@@ -35,6 +36,7 @@ const VISIBLE_WEIGHT_EXPONENT = 2.5;
 function buildLayersMenu(layerGroups) {
   // Record data in global store.
   HEATMAP_GROUPS = {};
+  console.log(layerGroups)
   layerGroups.forEach(function (group) {
     let layers = {};
     group.layers.forEach(function (layer, index) {
@@ -46,7 +48,7 @@ function buildLayersMenu(layerGroups) {
         legend: metadata.legend,
       };
     })
-    
+
     HEATMAP_GROUPS[group.version] = {
       version: group.version,
       name: group.metadata.AOI,
@@ -54,7 +56,7 @@ function buildLayersMenu(layerGroups) {
       layers,
     };
   });
-  
+
   document.querySelectorAll('#map-select .group').forEach(function (node) {
     MAP_SELECT.removeChild(node);
   });
@@ -95,7 +97,7 @@ function buildLayerGroup(layerGroup) {
       htmlApproveButton.textContent = 'Approving...';
       htmlApproveButton.onclick = function (e2) { e2 && e2.preventDefault(); return false };  //Cancel out the approve button
 
-      API.approve(eventName, layerGroup.version)
+      api().approve(eventName, layerGroup.version)
         .then(function (res) {
           htmlApproveButton.textContent = 'DONE!';
         })
@@ -103,7 +105,7 @@ function buildLayerGroup(layerGroup) {
           console.error(err);
           htmlApproveButton.textContent = 'ERROR';
         });
-      
+
       e && e.preventDefault();
       return false;
     };
@@ -112,7 +114,7 @@ function buildLayerGroup(layerGroup) {
   layerGroup.layers
     .map(function (layer) { return buildLayerInput(layer, layerGroup) })
     .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
-  
+
   // Add toggle option
   const htmlToggle = document.createElement('button');
   htmlToggle.textContent = 'Toggle group';
@@ -123,9 +125,9 @@ function buildLayerGroup(layerGroup) {
     //If any checkboxes are checked, uncheck them all. Otherwise, check them all.
     const anySelected = !!checkboxes.find(function (checkbox) { return checkbox.checked });
     checkboxes.forEach(function (checkbox) { checkbox.checked = !anySelected });
-    
+
     toggleMultipleLayers(version);
-    
+
     e && e.preventDefault();
     return false;
   };
@@ -138,24 +140,24 @@ function buildLayerInput(layer, layerGroup) {
   const layerMetadata = (layerGroup && layerGroup.metadata && layerGroup.metadata.layers)
     ? layerGroup.metadata.layers.find(function (layermeta) { return layer.url.endsWith(`/${layermeta.file_name}`) })
     : undefined;
-  
+
   const div = document.createElement('div');
   const option = document.createElement('label');
   const checkbox = document.createElement('input');
   const span = document.createElement('span');
-  
+
   span.textContent = (layerMetadata && layerMetadata.description)
     ? layerMetadata.description
     : layer.name;
-  
+
   checkbox.type='checkbox';
   checkbox.value = layer.url;
   checkbox.checked = true;
-  
+
   option.appendChild(checkbox)
   option.appendChild(span);
   div.appendChild(option);
-  
+
   // Add legends, if any.
   const legends = (HEATMAP_GROUPS[layerGroup.version] && HEATMAP_GROUPS[layerGroup.version].layers[layer.url])
     ? HEATMAP_GROUPS[layerGroup.version].layers[layer.url].legend
@@ -171,12 +173,12 @@ function buildLayerInput(layer, layerGroup) {
     });
     div.appendChild(ol);
   }
-  
+
   div.className = 'layer-control';
   div.dataset.group = layerGroup.version;
   div.dataset.layer = layer.name;
   div.dataset.url = layer.url;
-  
+
   return div;
 }
 
@@ -187,10 +189,10 @@ function minimumWeight([lat, lng, weight]) {
 
 function parseLine([lat, lng, weight]) {
   const location = new google.maps.LatLng(lat, lng);
-  
+
   // Actual weight values range from 1-5, so we need to crank that up to make the points visible on the map.
   const visibleWeight = Math.pow((weight), VISIBLE_WEIGHT_EXPONENT) * VISIBLE_WEIGHT_MULTIPLIER;
-  
+
   return { location, weight: visibleWeight };
 }
 
@@ -247,7 +249,7 @@ function toggleLayer(event) {
 
 function toggleMultipleLayers(layerGroupVersion) {
   const checkboxes = Array.from(document.querySelectorAll(`.layer-control[data-group='${layerGroupVersion}'] input[type='checkbox']`));
-  
+
   checkboxes.forEach(function (checkbox) {
     const url = checkbox.value;
     if (checkbox.checked) {
@@ -260,7 +262,7 @@ function toggleMultipleLayers(layerGroupVersion) {
       HEATMAPS[url] && HEATMAPS[url].setMap(null);
     }
   });
-  
+
   /*if (event.target.checked) {
     if (HEATMAPS[url]) {
       HEATMAPS[url].setMap(GOOGLE_MAP);
@@ -295,7 +297,7 @@ function updateMapControlsUI () {
   const threshold = parseInt(MAP_THRESHOLD.value);
   const thresholdMin = Number.parseInt(MAP_THRESHOLD.min);
   const thresholdMax = Number.parseInt(MAP_THRESHOLD.max);
-  
+
   for (let val = thresholdMin; val <= thresholdMax; val++) {
     const selectedElements = document.querySelectorAll(`.layer-control-legends li[data-legend-value='${val}']`);
     Array.from(selectedElements).forEach(function (element) {
@@ -306,7 +308,7 @@ function updateMapControlsUI () {
 }
 
 function FitEventBounds() {
-  API.event(eventName)
+  api().event(eventName)
   .then(function (event) {
     const boundingBoxCoords = event.bounding_box_coords;
     if (boundingBoxCoords) {
@@ -355,7 +357,7 @@ if (pendingLayers) {
   getLayerFunc = 'layer';
 }
 
-API[getLayerFunc](eventName, layer)
+api()[getLayerFunc](eventName, layer)
   .then(buildLayersMenu)
   .then(function () {
     if (layer) {

@@ -48,7 +48,7 @@ const API = {
     return Promise.all(layers.map(function (layer) {
 
       function mergeLayerAndMetadata(metadata = null) {
-        layer.metadata = metadata; 
+        layer.metadata = metadata;
         return layer;
       }
 
@@ -64,6 +64,9 @@ const API = {
         return mergeLayerAndMetadata();
       });
     }));  // This chain returns the layers, merged with their respective metadata.
-
   },
 }
+
+export function api() {
+  return API;
+};
