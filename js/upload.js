@@ -1,4 +1,5 @@
-import { queryParams } from './queryParams.js'
+import { queryParams } from './queryParams.js';
+import { API } from './api.js';
 
 const htmlUploadForm = document.getElementById('upload-form');
 const htmlEventList = document.getElementById('event-list');
