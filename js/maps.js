@@ -20,17 +20,16 @@ var HEATMAP_GROUPS = {};
 const HEATMAPS = {};
 const HEATMAP_DATA = {};
 
-let HEATMAP_GRADIENT = [  // Pre-set colour gradient - provides the best contrast on a predominantly blue-green map.
-  'rgba(255, 0, 0, 0.0)',  // Transparency required as first step to indicate 0-value
-  'rgba(255, 0, 0, 0.5)',  // First step should be at opacity 1.0 so points will be visible at full zoom.
-  'rgba(255, 64, 0, 0.5)',
-  'rgba(255, 128, 0, 0.5)',
-  'rgba(255, 192, 32, 0.5)',
-  'rgba(255, 255, 64, 0.5)',
+// Pre-set colour gradients - provides the best contrast on a predominantly blue-green map.
+// The first step in each gradient must be fully transparent, to indicate the 0-value.
+let HEATMAP_GRADIENT = [  
+  'rgba(255, 255, 0, 0.0)',
+  'rgba(255, 255, 0, 0.5)',
 ];
 
-const VISIBLE_WEIGHT_MULTIPLIER = 5;  // The dots are more visible on the map with a higher weight.
-const VISIBLE_WEIGHT_EXPONENT = 2.5;
+// The dots are more visible on the map with a higher weight.
+const VISIBLE_WEIGHT_MULTIPLIER = 1;
+const VISIBLE_WEIGHT_EXPONENT = 2;
 
 function buildLayersMenu(layerGroups) {
   // Record data in global store.
@@ -355,13 +354,24 @@ if (pendingLayers) {
   getLayerFunc = 'layer';
 }
 
-API[getLayerFunc](eventName, layer)
-  .then(buildLayersMenu)
-  .then(function () {
-    if (layer) {
-      renderMap(zoomToFit);
-    } else {
-      renderMap();
-      FitEventBounds();
-    }
-  });
+
+class MapApp {
+  constructor () {
+    this.fetchMapData();
+  }
+
+  fetchMapData () {
+    API[getLayerFunc](eventName, layer)
+    .then(buildLayersMenu)
+    .then(function () {
+      if (layer) {
+        renderMap(zoomToFit);
+      } else {
+        renderMap();
+        FitEventBounds();
+      }
+    });
+  }
+}
+
+window.mapApp = new MapApp();
