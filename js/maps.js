@@ -31,37 +31,6 @@ let HEATMAP_GRADIENT = [
 const VISIBLE_WEIGHT_MULTIPLIER = 1;
 const VISIBLE_WEIGHT_EXPONENT = 2;
 
-function buildLayersMenu(layerGroups) {
-  // Record data in global store.
-  HEATMAP_GROUPS = {};
-  layerGroups.forEach(function (group) {
-    let layers = {};
-    group.layers.forEach(function (layer, index) {
-      const metadata = (group.metadata && group.metadata.layers && group.metadata.layers[index]) || {};
-      layers[layer.url] = {
-        name: layer.name,
-        url: layer.url,
-        description: metadata.description,
-        legend: metadata.legend,
-      };
-    })
-    
-    HEATMAP_GROUPS[group.version] = {
-      version: group.version,
-      name: group.metadata.AOI,
-      metadataUrl: group.metadata_url,
-      layers,
-    };
-  });
-  
-  document.querySelectorAll('#map-select .group').forEach(function (node) {
-    MAP_SELECT.removeChild(node);
-  });
-  layerGroups
-    .map(buildLayerGroup)
-    .forEach(function (htmlGroup) { MAP_SELECT.appendChild(htmlGroup) });
-}
-
 function buildLayerGroup(layerGroup) {
   const htmlGroup = document.createElement('fieldset');
   htmlGroup.id = layerGroup.version;
@@ -354,7 +323,6 @@ if (pendingLayers) {
   getLayerFunc = 'layer';
 }
 
-
 class MapApp {
   constructor () {
     this.fetchMapData();
@@ -362,15 +330,52 @@ class MapApp {
 
   fetchMapData () {
     API[getLayerFunc](eventName, layer)
-    .then(buildLayersMenu)
-    .then(function () {
-      if (layer) {
-        renderMap(zoomToFit);
-      } else {
-        renderMap();
-        FitEventBounds();
-      }
+      .then(this.saveMapData)
+      .then(this.buildMapControls)
+      .then(function () {
+        if (layer) {
+          renderMap(zoomToFit);
+        } else {
+          renderMap();
+          FitEventBounds();
+        }
+      });
+  }
+  
+  saveMapData (layerGroups) {
+    // Record data in global store.
+    HEATMAP_GROUPS = {};
+    layerGroups.forEach(function (group) {
+      let layers = {};
+      group.layers.forEach(function (layer, index) {
+        const metadata = (group.metadata && group.metadata.layers && group.metadata.layers[index]) || {};
+        layers[layer.url] = {
+          name: layer.name,
+          url: layer.url,
+          description: metadata.description,
+          legend: metadata.legend,
+        };
+      })
+
+      HEATMAP_GROUPS[group.version] = {
+        version: group.version,
+        name: group.metadata.AOI,
+        metadataUrl: group.metadata_url,
+        layers,
+      };
     });
+    
+    return layerGroups;
+  }
+  
+  buildMapControls (layerGroups) {
+    document.querySelectorAll('#map-select .group').forEach(function (node) {
+      MAP_SELECT.removeChild(node);
+    });
+    
+    layerGroups
+      .map(buildLayerGroup)
+      .forEach(function (htmlGroup) { MAP_SELECT.appendChild(htmlGroup) });
   }
 }
 
