@@ -23,8 +23,7 @@ const HEATMAP_DATA = {};
 // Pre-set colour gradients - provides the best contrast on a predominantly blue-green map.
 // The first step in each gradient must be fully transparent, to indicate the 0-value.
 let HEATMAP_GRADIENT = [  
-  'rgba(255, 255, 0, 0.0)',
-  'rgba(255, 255, 0, 0.5)',
+  'rgba(255, 255, 0, 0.0)', 'rgba(255, 255, 0, 0.5)',
 ];
 
 // The dots are more visible on the map with a higher weight.
@@ -77,7 +76,7 @@ function buildLayerGroup(layerGroup) {
     };
   }
 
-  layerGroup.layers
+  Object.values(layerGroup.layers)
     .map(function (layer) { return buildLayerInput(layer, layerGroup) })
     .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
   
@@ -318,8 +317,8 @@ class MapApp {
 
   fetchMapData () {
     API[getLayerFunc](eventName, layer)
-      .then(this.saveMapData)
-      .then(this.buildMapControls)
+      .then(this.saveMapData.bind(this))
+      .then(this.buildMapControls.bind(this))
       .then(function () {
         if (layer) {
           renderMap(zoomToFit);
@@ -342,8 +341,10 @@ class MapApp {
           url: layer.url,
           description: metadata.description,
           legend: metadata.legend,
+          colour: this.chooseLayerColour(index),
+          gradient: this.chooseLayerGradient(index),
         };
-      })
+      }.bind(this))
 
       HEATMAP_GROUPS[group.version] = {
         version: group.version,
@@ -351,7 +352,7 @@ class MapApp {
         metadataUrl: group.metadata_url,
         layers,
       };
-    });
+    }.bind(this));
     
     return layerGroups;
   }
@@ -361,9 +362,30 @@ class MapApp {
       MAP_SELECT.removeChild(node);
     });
     
-    layerGroups
+    Object.values(HEATMAP_GROUPS)
+      //.map(this.buildMapControls_layerGroups)
       .map(buildLayerGroup)
       .forEach(function (htmlGroup) { MAP_SELECT.appendChild(htmlGroup) });
+  }
+  
+  buildMapControls_layerGroups (layerGroup) {
+    
+  }
+  
+  chooseLayerColour (index) {
+    const colours = [
+      'rgba(255, 255, 0, 1.0)',
+      'rgba(255, 0, 255, 1.0)',
+    ];
+    return colours[Math.max(index, colours.length - 1)];
+  }
+  
+  chooseLayerGradient (index) {
+    const colours = [
+      [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 255, 0, 0.5)', ],
+      [ 'rgba(255, 0, 255, 0.0)', 'rgba(255, 0, 255, 0.5)', ],
+    ];
+    return colours[Math.max(index, colours.length - 1)];
   }
 }
 
