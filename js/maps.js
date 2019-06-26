@@ -30,56 +30,6 @@ let HEATMAP_GRADIENT = [
 const VISIBLE_WEIGHT_MULTIPLIER = 1;
 const VISIBLE_WEIGHT_EXPONENT = 2;
 
-function buildLayerGroup(layerGroup) {
-  
-}
-
-function buildLayerInput(layer, layerGroup) {
-  const layerMetadata = (layerGroup && layerGroup.metadata && layerGroup.metadata.layers)
-    ? layerGroup.metadata.layers.find(function (layermeta) { return layer.url.endsWith(`/${layermeta.file_name}`) })
-    : undefined;
-  
-  const div = document.createElement('div');
-  const option = document.createElement('label');
-  const checkbox = document.createElement('input');
-  const span = document.createElement('span');
-  
-  span.textContent = (layerMetadata && layerMetadata.description)
-    ? layerMetadata.description
-    : layer.name;
-  
-  checkbox.type='checkbox';
-  checkbox.value = layer.url;
-  checkbox.checked = true;
-  
-  option.appendChild(checkbox)
-  option.appendChild(span);
-  div.appendChild(option);
-  
-  // Add legends, if any.
-  const legends = (HEATMAP_GROUPS[layerGroup.version] && HEATMAP_GROUPS[layerGroup.version].layers[layer.url])
-    ? HEATMAP_GROUPS[layerGroup.version].layers[layer.url].legend
-    : [];
-  if (legends && legends.length > 0) {
-    const ol = document.createElement('ol');
-    ol.className = 'layer-control-legends';
-    legends.forEach(function (legend, index) {
-      const li = document.createElement('li');
-      li.textContent = legend;
-      li.dataset.legendValue = index + 1;
-      ol.appendChild(li);
-    });
-    div.appendChild(ol);
-  }
-  
-  div.className = 'layer-control';
-  div.dataset.group = layerGroup.version;
-  div.dataset.layer = layer.name;
-  div.dataset.url = layer.url;
-  
-  return div;
-}
-
 function minimumWeight([lat, lng, weight]) {
   const threshold = parseInt(MAP_THRESHOLD.value);
   return weight >= threshold;
@@ -296,7 +246,7 @@ class MapApp {
     });
     
     Object.values(HEATMAP_GROUPS)
-      .map(this.buildMapControls_layerGroups)
+      .map(this.buildMapControls_layerGroups.bind(this))
       .forEach(function (htmlGroup) { MAP_SELECT.appendChild(htmlGroup) });
   }
   
@@ -347,7 +297,7 @@ class MapApp {
     }
 
     Object.values(layerGroup.layers)
-      .map(function (layer) { return buildLayerInput(layer, layerGroup) })
+      .map(function (layer) { return this.buildMapControls_individual(layer, layerGroup) }.bind(this))
       .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
 
     // Add toggle option
@@ -369,6 +319,52 @@ class MapApp {
     htmlGroup.appendChild(htmlToggle);
 
     return htmlGroup;
+  }
+  
+  buildMapControls_individual (layer, layerGroup) {
+    const layerMetadata = (layerGroup && layerGroup.metadata && layerGroup.metadata.layers)
+      ? layerGroup.metadata.layers.find(function (layermeta) { return layer.url.endsWith(`/${layermeta.file_name}`) })
+      : undefined;
+
+    const div = document.createElement('div');
+    const option = document.createElement('label');
+    const checkbox = document.createElement('input');
+    const span = document.createElement('span');
+
+    span.textContent = (layerMetadata && layerMetadata.description)
+      ? layerMetadata.description
+      : layer.name;
+
+    checkbox.type='checkbox';
+    checkbox.value = layer.url;
+    checkbox.checked = true;
+
+    option.appendChild(checkbox)
+    option.appendChild(span);
+    div.appendChild(option);
+
+    // Add legends, if any.
+    const legends = (HEATMAP_GROUPS[layerGroup.version] && HEATMAP_GROUPS[layerGroup.version].layers[layer.url])
+      ? HEATMAP_GROUPS[layerGroup.version].layers[layer.url].legend
+      : [];
+    if (legends && legends.length > 0) {
+      const ol = document.createElement('ol');
+      ol.className = 'layer-control-legends';
+      legends.forEach(function (legend, index) {
+        const li = document.createElement('li');
+        li.textContent = legend;
+        li.dataset.legendValue = index + 1;
+        ol.appendChild(li);
+      });
+      div.appendChild(ol);
+    }
+
+    div.className = 'layer-control';
+    div.dataset.group = layerGroup.version;
+    div.dataset.layer = layer.name;
+    div.dataset.url = layer.url;
+
+    return div;
   }
   
   chooseLayerColour (index) {
