@@ -31,74 +31,7 @@ const VISIBLE_WEIGHT_MULTIPLIER = 1;
 const VISIBLE_WEIGHT_EXPONENT = 2;
 
 function buildLayerGroup(layerGroup) {
-  const htmlGroup = document.createElement('fieldset');
-  htmlGroup.id = layerGroup.version;
-  htmlGroup.className = 'group';
-
-  const htmlHeader = document.createElement('legend');
-  htmlHeader.textContent = (layerGroup.metadata && layerGroup.metadata.AOI)
-    ? layerGroup.metadata.AOI
-    : layerGroup.version;
-  htmlGroup.appendChild(htmlHeader);
-
-  const htmlSubmenu = document.createElement('div');
-  htmlSubmenu.className = 'submenu';
-  htmlGroup.appendChild(htmlSubmenu);
-
-  const htmlMetadataLink = document.createElement('a');
-  htmlMetadataLink.className = 'metadata-link';
-  htmlMetadataLink.href = layerGroup.metadata_url;
-  htmlMetadataLink.target = '_blank';
-  htmlMetadataLink.textContent = 'Metadata';
-  htmlSubmenu.appendChild(htmlMetadataLink);
-
-  if (pendingLayers) {
-    const htmlApproveButton = document.createElement('button');
-    htmlApproveButton.className = 'approve-button';
-    htmlApproveButton.textContent = 'Approve';
-    htmlSubmenu.appendChild(htmlApproveButton);
-
-    htmlApproveButton.onclick = function (e) {
-      htmlApproveButton.textContent = 'Approving...';
-      htmlApproveButton.onclick = function (e2) { e2 && e2.preventDefault(); return false };  //Cancel out the approve button
-
-      API.approve(eventName, layerGroup.version)
-        .then(function (res) {
-          htmlApproveButton.textContent = 'DONE!';
-        })
-        .catch(function (err) {
-          console.error(err);
-          htmlApproveButton.textContent = 'ERROR';
-        });
-      
-      e && e.preventDefault();
-      return false;
-    };
-  }
-
-  Object.values(layerGroup.layers)
-    .map(function (layer) { return buildLayerInput(layer, layerGroup) })
-    .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
   
-  // Add toggle option
-  const htmlToggle = document.createElement('button');
-  htmlToggle.textContent = 'Toggle group';
-  htmlToggle.onclick = function (e) {
-    const version = layerGroup.version;
-    const checkboxes = Array.from(document.querySelectorAll(`.layer-control[data-group='${version}'] input[type='checkbox']`));
-
-    //If any checkboxes are checked, uncheck them all. Otherwise, check them all.
-    const anySelected = !!checkboxes.find(function (checkbox) { return checkbox.checked });
-    checkboxes.forEach(function (checkbox) { checkbox.checked = !anySelected });
-    
-    toggleMultipleLayers(version);
-    
-    e && e.preventDefault();
-    return false;
-  };
-  htmlGroup.appendChild(htmlToggle);
-
-  return htmlGroup;
 }
 
 function buildLayerInput(layer, layerGroup) {
@@ -363,13 +296,79 @@ class MapApp {
     });
     
     Object.values(HEATMAP_GROUPS)
-      //.map(this.buildMapControls_layerGroups)
-      .map(buildLayerGroup)
+      .map(this.buildMapControls_layerGroups)
       .forEach(function (htmlGroup) { MAP_SELECT.appendChild(htmlGroup) });
   }
   
   buildMapControls_layerGroups (layerGroup) {
-    
+    const htmlGroup = document.createElement('fieldset');
+    htmlGroup.id = layerGroup.version;
+    htmlGroup.className = 'group';
+
+    const htmlHeader = document.createElement('legend');
+    htmlHeader.textContent = (layerGroup.metadata && layerGroup.metadata.AOI)
+      ? layerGroup.metadata.AOI
+      : layerGroup.version;
+    htmlGroup.appendChild(htmlHeader);
+
+    const htmlSubmenu = document.createElement('div');
+    htmlSubmenu.className = 'submenu';
+    htmlGroup.appendChild(htmlSubmenu);
+
+    const htmlMetadataLink = document.createElement('a');
+    htmlMetadataLink.className = 'metadata-link';
+    htmlMetadataLink.href = layerGroup.metadata_url;
+    htmlMetadataLink.target = '_blank';
+    htmlMetadataLink.textContent = 'Metadata';
+    htmlSubmenu.appendChild(htmlMetadataLink);
+
+    if (pendingLayers) {
+      const htmlApproveButton = document.createElement('button');
+      htmlApproveButton.className = 'approve-button';
+      htmlApproveButton.textContent = 'Approve';
+      htmlSubmenu.appendChild(htmlApproveButton);
+
+      htmlApproveButton.onclick = function (e) {
+        htmlApproveButton.textContent = 'Approving...';
+        htmlApproveButton.onclick = function (e2) { e2 && e2.preventDefault(); return false };  //Cancel out the approve button
+
+        API.approve(eventName, layerGroup.version)
+          .then(function (res) {
+            htmlApproveButton.textContent = 'DONE!';
+          })
+          .catch(function (err) {
+            console.error(err);
+            htmlApproveButton.textContent = 'ERROR';
+          });
+
+        e && e.preventDefault();
+        return false;
+      };
+    }
+
+    Object.values(layerGroup.layers)
+      .map(function (layer) { return buildLayerInput(layer, layerGroup) })
+      .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
+
+    // Add toggle option
+    const htmlToggle = document.createElement('button');
+    htmlToggle.textContent = 'Toggle group';
+    htmlToggle.onclick = function (e) {
+      const version = layerGroup.version;
+      const checkboxes = Array.from(document.querySelectorAll(`.layer-control[data-group='${version}'] input[type='checkbox']`));
+
+      //If any checkboxes are checked, uncheck them all. Otherwise, check them all.
+      const anySelected = !!checkboxes.find(function (checkbox) { return checkbox.checked });
+      checkboxes.forEach(function (checkbox) { checkbox.checked = !anySelected });
+
+      toggleMultipleLayers(version);
+
+      e && e.preventDefault();
+      return false;
+    };
+    htmlGroup.appendChild(htmlToggle);
+
+    return htmlGroup;
   }
   
   chooseLayerColour (index) {
