@@ -170,8 +170,6 @@ function filteredMapData(results) {
 
 function parseMapData(results, url) {
   // For each heatmap, assign a preset colour to it.
-  const numberOfHeatmaps = Object.keys(HEATMAPS).length;
-
   const heatmap = new google.maps.visualization.HeatmapLayer({
     gradient: HEATMAP_GRADIENT,
     maxIntensity: 30,
@@ -228,16 +226,6 @@ function toggleMultipleLayers(layerGroupVersion) {
       HEATMAPS[url] && HEATMAPS[url].setMap(null);
     }
   });
-  
-  /*if (event.target.checked) {
-    if (HEATMAPS[url]) {
-      HEATMAPS[url].setMap(GOOGLE_MAP);
-    } else {
-      readMapFile(url);
-    }
-  } else {
-    HEATMAPS[url] && HEATMAPS[url].setMap(null);
-  }*/
 }
 
 function renderMap(resolveFunc) {
@@ -273,7 +261,7 @@ function updateMapControlsUI () {
   }
 }
 
-function FitEventBounds() {
+function fitEventBounds() {
   API.event(eventName)
   .then(function (event) {
     const boundingBoxCoords = event.bounding_box_coords;
@@ -337,7 +325,7 @@ class MapApp {
           renderMap(zoomToFit);
         } else {
           renderMap();
-          FitEventBounds();
+          fitEventBounds();
         }
       });
   }
