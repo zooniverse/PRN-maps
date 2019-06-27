@@ -17,13 +17,6 @@ const MAP_OPTIONS = {
 }
 
 var HEATMAP_GROUPS = {};
-const HEATMAP_DATA = {};
-
-// Pre-set colour gradients - provides the best contrast on a predominantly blue-green map.
-// The first step in each gradient must be fully transparent, to indicate the 0-value.
-let HEATMAP_GRADIENT = [  
-  'rgba(255, 255, 0, 0.0)', 'rgba(255, 255, 0, 0.5)',
-];
 
 // The dots are more visible on the map with a higher weight.
 const VISIBLE_WEIGHT_MULTIPLIER = 1;
@@ -67,8 +60,6 @@ function parseMapData (results, url) {
   });
   layer.heatmap = heatmap;
   
-  // TODO: change to HEATMAP_GROUPS
-  
   const heatmapData = filteredMapData(results);
   heatmap.setData(heatmapData);
   heatmap.setMap(GOOGLE_MAP);
@@ -79,7 +70,7 @@ function cacheMapData (results, file) {
   const { group, layer } = selectLayerByUrl(url);
   if (!layer) return;
   
-  HEATMAP_DATA[url] = url ? results : undefined;
+  layer.csvData = results;
   parseMapData(results, url);
 }
 
@@ -402,7 +393,7 @@ class MapApp {
         const { group, layer } = selectLayerByUrl(url);
       
         if (layer && layer.heatmap) {
-          const heatmapData = filteredMapData(HEATMAP_DATA[url]);
+          const heatmapData = filteredMapData(layer.csvData);
           layer.heatmap.setData(heatmapData);
           layer.heatmap.setMap(GOOGLE_MAP);
         } else {
