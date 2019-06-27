@@ -221,6 +221,7 @@ class MapApp {
         const metadata = (group.metadata && group.metadata.layers && group.metadata.layers[index]) || {};
         layers[layer.url] = {
           name: layer.name,
+          group: group.version,
           url: layer.url,
           description: metadata.description,
           legend: metadata.legend,
@@ -322,18 +323,12 @@ class MapApp {
   }
   
   buildMapControls_layerHtml (layer, layerGroup) {
-    const layerMetadata = (layerGroup && layerGroup.metadata && layerGroup.metadata.layers)
-      ? layerGroup.metadata.layers.find(function (layermeta) { return layer.url.endsWith(`/${layermeta.file_name}`) })
-      : undefined;
-
     const div = document.createElement('div');
     const label = document.createElement('label');
     const checkbox = document.createElement('input');
     const span = document.createElement('span');
 
-    span.textContent = (layerMetadata && layerMetadata.description)
-      ? layerMetadata.description
-      : layer.name;
+    span.textContent = layer.description;
 
     checkbox.type = 'checkbox';
     checkbox.value = layer.url;
@@ -345,9 +340,7 @@ class MapApp {
     div.appendChild(label);
 
     // Add legends, if any.
-    const legends = (HEATMAP_GROUPS[layerGroup.version] && HEATMAP_GROUPS[layerGroup.version].layers[layer.url])
-      ? HEATMAP_GROUPS[layerGroup.version].layers[layer.url].legend
-      : [];
+    const legends = (layer && layer.legend) || [];
     if (legends && legends.length > 0) {
       const ol = document.createElement('ol');
       ol.className = 'layer-control-legends';
@@ -361,7 +354,7 @@ class MapApp {
     }
 
     div.className = 'layer-control';
-    div.dataset.group = layerGroup.version;
+    div.dataset.group = layer.group;
     div.dataset.layer = layer.name;
     div.dataset.url = layer.url;
 
@@ -373,6 +366,8 @@ class MapApp {
       'rgba(255, 255, 0, 1.0)',
       'rgba(255, 0, 255, 1.0)',
       'rgba(0, 255, 255, 1.0)',
+      'rgba(255, 0, 0, 1.0)',
+      'rgba(0, 255, 0, 1.0)',
     ];
     return colours[Math.min(index, colours.length - 1)];
   }
@@ -382,6 +377,8 @@ class MapApp {
       [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 255, 0, 0.5)', ],
       [ 'rgba(255, 0, 255, 0.0)', 'rgba(255, 0, 255, 0.5)', ],
       [ 'rgba(0, 255, 255, 0.0)', 'rgba(0, 255, 255, 0.5)', ],
+      [ 'rgba(255, 0, 0, 0.0)', 'rgba(255, 0, 0, 0.5)', ],
+      [ 'rgba(0, 255, 0, 0.0)', 'rgba(0, 255, 0, 0.5)', ],
     ];
     return colours[Math.min(index, colours.length - 1)];
   }
