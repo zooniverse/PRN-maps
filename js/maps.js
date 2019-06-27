@@ -246,11 +246,11 @@ class MapApp {
     });
     
     Object.values(HEATMAP_GROUPS)
-      .map(this.buildMapControls_layerGroups.bind(this))
+      .map(this.buildMapControls_groupHtml.bind(this))
       .forEach(function (htmlGroup) { MAP_SELECT.appendChild(htmlGroup) });
   }
   
-  buildMapControls_layerGroups (layerGroup) {
+  buildMapControls_groupHtml (layerGroup) {
     const htmlGroup = document.createElement('fieldset');
     htmlGroup.id = layerGroup.version;
     htmlGroup.className = 'group';
@@ -297,7 +297,7 @@ class MapApp {
     }
 
     Object.values(layerGroup.layers)
-      .map(function (layer) { return this.buildMapControls_individual(layer, layerGroup) }.bind(this))
+      .map(function (layer) { return this.buildMapControls_layerHtml(layer, layerGroup) }.bind(this))
       .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
 
     // Add toggle option
@@ -321,13 +321,13 @@ class MapApp {
     return htmlGroup;
   }
   
-  buildMapControls_individual (layer, layerGroup) {
+  buildMapControls_layerHtml (layer, layerGroup) {
     const layerMetadata = (layerGroup && layerGroup.metadata && layerGroup.metadata.layers)
       ? layerGroup.metadata.layers.find(function (layermeta) { return layer.url.endsWith(`/${layermeta.file_name}`) })
       : undefined;
 
     const div = document.createElement('div');
-    const option = document.createElement('label');
+    const label = document.createElement('label');
     const checkbox = document.createElement('input');
     const span = document.createElement('span');
 
@@ -335,13 +335,14 @@ class MapApp {
       ? layerMetadata.description
       : layer.name;
 
-    checkbox.type='checkbox';
+    checkbox.type = 'checkbox';
     checkbox.value = layer.url;
     checkbox.checked = true;
 
-    option.appendChild(checkbox)
-    option.appendChild(span);
-    div.appendChild(option);
+    label.style.borderRight = `0.5em solid ${layer.colour}`;
+    label.appendChild(checkbox)
+    label.appendChild(span);
+    div.appendChild(label);
 
     // Add legends, if any.
     const legends = (HEATMAP_GROUPS[layerGroup.version] && HEATMAP_GROUPS[layerGroup.version].layers[layer.url])
@@ -371,16 +372,18 @@ class MapApp {
     const colours = [
       'rgba(255, 255, 0, 1.0)',
       'rgba(255, 0, 255, 1.0)',
+      'rgba(0, 255, 255, 1.0)',
     ];
-    return colours[Math.max(index, colours.length - 1)];
+    return colours[Math.min(index, colours.length - 1)];
   }
   
   chooseLayerGradient (index) {
     const colours = [
       [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 255, 0, 0.5)', ],
       [ 'rgba(255, 0, 255, 0.0)', 'rgba(255, 0, 255, 0.5)', ],
+      [ 'rgba(0, 255, 255, 0.0)', 'rgba(0, 255, 255, 0.5)', ],
     ];
-    return colours[Math.max(index, colours.length - 1)];
+    return colours[Math.min(index, colours.length - 1)];
   }
 }
 
