@@ -17,7 +17,6 @@ const MAP_OPTIONS = {
 }
 
 var HEATMAP_GROUPS = {};
-const HEATMAPS = {};
 const HEATMAP_DATA = {};
 
 // Pre-set colour gradients - provides the best contrast on a predominantly blue-green map.
@@ -50,26 +49,41 @@ function filteredMapData(results) {
     .map(parseLine);
 }
 
-function parseMapData(results, url) {
+function selectLayerByUrl (url) {
+  const group = Object.values(HEATMAP_GROUPS).find(group => !!group.layers[url]);
+  const layer = group && group.layers[url];
+  return { group, layer };
+}
+
+function parseMapData (results, url) {
+  const { group, layer } = selectLayerByUrl(url);
+  if (!layer) return;
+  
   // For each heatmap, assign a preset colour to it.
   const heatmap = new google.maps.visualization.HeatmapLayer({
-    gradient: HEATMAP_GRADIENT,
-    maxIntensity: 30,
+    gradient: layer.gradient,
+    maxIntensity: 5,  // TODO: change level of maxIntensity based on metadata
     opacity: 1
   });
+  layer.heatmap = heatmap;
+  
+  // TODO: change to HEATMAP_GROUPS
+  
   const heatmapData = filteredMapData(results);
   heatmap.setData(heatmapData);
   heatmap.setMap(GOOGLE_MAP);
-  HEATMAPS[url] = url ? heatmap : undefined;
 }
 
-function cacheMapData(results, file) {
+function cacheMapData (results, file) {
   const url = file.streamer._input;
+  const { group, layer } = selectLayerByUrl(url);
+  if (!layer) return;
+  
   HEATMAP_DATA[url] = url ? results : undefined;
   parseMapData(results, url);
 }
 
-function readMapFile(url, resolver) {
+function readMapFile (url, resolver) {
   const config = {
     download: true,
     fastMode: true,
@@ -80,16 +94,18 @@ function readMapFile(url, resolver) {
   Papa.parse(url, config);
 }
 
-function toggleLayer(event) {
+function toggleLayer (event) {
   const url = event.target.value;
+  const { group, layer } = selectLayerByUrl(url);
+  
   if (event.target.checked) {
-    if (HEATMAPS[url]) {
-      HEATMAPS[url].setMap(GOOGLE_MAP);
+    if (layer) {
+      layer.heatmap.setMap(GOOGLE_MAP);
     } else {
       readMapFile(url);
     }
   } else {
-    HEATMAPS[url] && HEATMAPS[url].setMap(null);
+    layer.heatmap && layer.heatmap.setMap(null);
   }
 }
 
@@ -98,35 +114,18 @@ function toggleMultipleLayers(layerGroupVersion) {
   
   checkboxes.forEach(function (checkbox) {
     const url = checkbox.value;
+    const { group, layer } = selectLayerByUrl(url);
+    
     if (checkbox.checked) {
-      if (HEATMAPS[url]) {
-        HEATMAPS[url].setMap(GOOGLE_MAP);
+      if (layer) {
+        layer.heatmap.setMap(GOOGLE_MAP);
       } else {
         readMapFile(url);
       }
     } else {
-      HEATMAPS[url] && HEATMAPS[url].setMap(null);
+      layer.heatmap && layer.heatmap.setMap(null);
     }
   });
-}
-
-function renderMap(resolveFunc) {
-  const urls = Object.keys(HEATMAPS);
-  urls.forEach(function (url) {
-    HEATMAPS[url] && HEATMAPS[url].setMap(null);
-  })
-  MAP_SELECT.querySelectorAll('input:checked')
-    .forEach(function (node) {
-      const url = node.value;
-      if (HEATMAPS[url]) {
-        const heatmapData = filteredMapData(HEATMAP_DATA[url]);
-        HEATMAPS[url].setData(heatmapData);
-        HEATMAPS[url].setMap(GOOGLE_MAP);
-      } else {
-        readMapFile(url, resolveFunc);
-      }
-    })
-  updateMapControlsUI();
 }
 
 function updateMapControlsUI () {
@@ -164,7 +163,8 @@ function zoomToFit() {
   MAP_SELECT.querySelectorAll('input:checked')
     .forEach(function (node) {
       const url = node.value;
-      const data = HEATMAPS[url] && HEATMAPS[url].getData();
+      const { group, layer } = selectLayerByUrl(url);
+      const data = layer.heatmap && layer.heatmap.getData();
       data.forEach(function (point) {
         bounds.extend(point.location);
       });
@@ -172,10 +172,6 @@ function zoomToFit() {
   GOOGLE_MAP.fitBounds(bounds);
   GOOGLE_MAP.panToBounds(bounds);
 }
-
-MAP_SELECT.addEventListener('change', toggleLayer);
-MAP_THRESHOLD.addEventListener('change', renderMap);
-ZOOM_TO_FIT.addEventListener('click', zoomToFit);
 
 const center = new google.maps.LatLng(15.231458142, -61.2507115);
 const GOOGLE_MAP = new google.maps.Map(MAP_CONTAINER, Object.assign(MAP_OPTIONS, { center }));
@@ -195,6 +191,10 @@ if (pendingLayers) {
 
 class MapApp {
   constructor () {
+    MAP_SELECT.addEventListener('change', toggleLayer);
+    MAP_THRESHOLD.addEventListener('change', this.renderMap);
+    ZOOM_TO_FIT.addEventListener('click', zoomToFit);
+    
     this.fetchMapData();
   }
 
@@ -204,9 +204,9 @@ class MapApp {
       .then(this.buildMapControls.bind(this))
       .then(function () {
         if (layer) {
-          renderMap(zoomToFit);
+          window.mapApp.renderMap(zoomToFit);
         } else {
-          renderMap();
+          window.mapApp.renderMap();
           fitEventBounds();
         }
       });
@@ -227,6 +227,9 @@ class MapApp {
           legend: metadata.legend,
           colour: this.chooseLayerColour(index),
           gradient: this.chooseLayerGradient(index),
+          heatmap: undefined,
+          csvData: undefined,
+          show: true,
         };
       }.bind(this))
 
@@ -381,6 +384,32 @@ class MapApp {
       [ 'rgba(0, 255, 0, 0.0)', 'rgba(0, 255, 0, 0.5)', ],
     ];
     return colours[Math.min(index, colours.length - 1)];
+  }
+  
+  renderMap (resolveFunction) {
+    Object.values(HEATMAP_GROUPS)
+      .forEach((group) => {
+        group.layers && Object.values(group.layers).forEach((layer) => {
+          layer.heatmap && layer.heatmap.setMap(null);
+          
+          // TODO: instead of checking MAP_SELECT, use layer.show && && layer.heatmap && layer.heatmap.setMap(something);
+        });
+      });
+    
+    MAP_SELECT.querySelectorAll('input:checked')
+      .forEach(function (node) {
+        const url = node.value;
+        const { group, layer } = selectLayerByUrl(url);
+      
+        if (layer && layer.heatmap) {
+          const heatmapData = filteredMapData(HEATMAP_DATA[url]);
+          layer.heatmap.setData(heatmapData);
+          layer.heatmap.setMap(GOOGLE_MAP);
+        } else {
+          readMapFile(url, resolveFunction);
+        }
+      })
+    updateMapControlsUI();
   }
 }
 
