@@ -21,6 +21,7 @@ var HEATMAP_GROUPS = {};
 // The dots are more visible on the map with a higher weight.
 const VISIBLE_WEIGHT_MULTIPLIER = 1;
 const VISIBLE_WEIGHT_EXPONENT = 2;
+const MAX_INTENSITY = 5;
 
 function minimumWeight([lat, lng, weight]) {
   const threshold = parseInt(MAP_THRESHOLD.value);
@@ -55,7 +56,7 @@ function parseMapData (results, url) {
   // For each heatmap, assign a preset colour to it.
   const heatmap = new google.maps.visualization.HeatmapLayer({
     gradient: layer.gradient,
-    maxIntensity: 5,  // TODO: change level of maxIntensity based on metadata
+    maxIntensity: MAX_INTENSITY,  // TODO: change level of maxIntensity based on metadata
     opacity: 1
   });
   layer.heatmap = heatmap;
