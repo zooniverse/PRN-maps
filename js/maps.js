@@ -43,12 +43,6 @@ function filteredMapData (results) {
     .map(parseLine);
 }
 
-function selectLayerByUrl (url) {
-  const group = Object.values(HEATMAP_DATA).find(group => !!group.layers[url]);
-  const layer = group && group.layers[url];
-  return { group, layer };
-}
-
 function selectAllLayers () {
   return Object.values(HEATMAP_DATA)
     .map(group => {
@@ -56,6 +50,22 @@ function selectAllLayers () {
         || []
     })
     .flat();
+}
+
+function readMapFile (layer, resolveFunction) {
+  const config = {
+    download: true,
+    fastMode: true,
+    skipEmptyLines: true,
+    chunk: (results, file) => { cacheMapData(results, file, layer) },
+    complete: resolveFunction
+  }
+  Papa.parse(layer.url, config);
+}
+
+function cacheMapData (results, file, layer) {
+  layer.csvData = results;
+  parseMapData(results, layer);
 }
 
 function parseMapData (results, layer) {
@@ -72,26 +82,6 @@ function parseMapData (results, layer) {
   const heatmapData = filteredMapData(results);
   layer.heatmap.setData(heatmapData);
   layer.heatmap.setMap(GOOGLE_MAP);
-}
-
-function cacheMapData (results, file) {
-  const url = file.streamer._input;
-  const { group, layer } = selectLayerByUrl(url);
-  if (!layer) return;
-  
-  layer.csvData = results;
-  parseMapData(results, layer);
-}
-
-function readMapFile (url, resolver) {
-  const config = {
-    download: true,
-    fastMode: true,
-    skipEmptyLines: true,
-    chunk: cacheMapData,
-    complete: resolver
-  }
-  Papa.parse(url, config);
 }
 
 function fitEventBounds () {
@@ -339,7 +329,7 @@ class MapApp {
           layer.heatmap.setData(heatmapData);
           layer.heatmap.setMap(GOOGLE_MAP);
         } else {
-          readMapFile(layer.url, resolveFunction);
+          readMapFile(layer, resolveFunction);
         }
       }
     });
