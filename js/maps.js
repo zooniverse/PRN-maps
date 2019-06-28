@@ -16,7 +16,7 @@ const MAP_OPTIONS = {
   streetViewControl: false
 }
 
-var HEATMAP_DATA = {};
+var HEATMAP_DATA = {};  // TODO: move this into MapApp
 
 // The dots are more visible on the map with a higher weight.
 const VISIBLE_WEIGHT_MULTIPLIER = 1;
@@ -58,21 +58,20 @@ function selectAllLayers () {
     .flat();
 }
 
-function parseMapData (results, url) {
-  const { group, layer } = selectLayerByUrl(url);
-  if (!layer) return;
+function parseMapData (results, layer) {
+  // If a heatmap already exists, remove it.
+  if (layer.heatmap) layer.heatmap.setMap(null);
   
-  // For each heatmap, assign a preset colour to it.
-  const heatmap = new google.maps.visualization.HeatmapLayer({
+  // Add the new heatmap
+  layer.heatmap = new google.maps.visualization.HeatmapLayer({
     gradient: layer.gradient,
     maxIntensity: MAX_INTENSITY,  // TODO: change level of maxIntensity based on metadata
     opacity: 1
   });
-  layer.heatmap = heatmap;
   
   const heatmapData = filteredMapData(results);
-  heatmap.setData(heatmapData);
-  heatmap.setMap(GOOGLE_MAP);
+  layer.heatmap.setData(heatmapData);
+  layer.heatmap.setMap(GOOGLE_MAP);
 }
 
 function cacheMapData (results, file) {
@@ -81,7 +80,7 @@ function cacheMapData (results, file) {
   if (!layer) return;
   
   layer.csvData = results;
-  parseMapData(results, url);
+  parseMapData(results, layer);
 }
 
 function readMapFile (url, resolver) {
@@ -203,7 +202,13 @@ class MapApp {
       .map(this.buildMapControls_groupHtml.bind(this))
       .forEach((htmlGroup) => { HTML_MAP_SELECT.appendChild(htmlGroup) });
     
-    // TODO: select one of the maps.
+    console.log('+++ buildMapControls');
+    
+    // Select the first layer by default
+    const defaultLayer = selectAllLayers()[0];
+    defaultLayer && window.mapApp.activateLayer(defaultLayer);
+    const defaultRadio = document.getElementsByName('layer-control-input')[0];
+    defaultRadio && (defaultRadio.checked = true);
   }
   
   buildMapControls_groupHtml (layerGroup) {
