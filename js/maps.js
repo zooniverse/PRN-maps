@@ -1,9 +1,9 @@
 import { queryParams } from './queryParams.js'
 
-const MAP_CONTAINER = document.getElementById('map');
-const MAP_THRESHOLD = document.getElementById('map-threshold');
-const MAP_SELECT_FORM = document.getElementById('map-select');
-const ZOOM_TO_FIT = document.getElementById('zoom-to-fit');
+const HTML_MAP_CONTAINER = document.getElementById('map');
+const HTML_MAP_THRESHOLD = document.getElementById('map-threshold');
+const HTML_MAP_SELECT = document.getElementById('map-select');
+const HTML_ZOOM_TO_FIT = document.getElementById('zoom-to-fit');
 const MAP_OPTIONS = {
   zoom: 10,
   mapTypeControl: true,
@@ -16,19 +16,19 @@ const MAP_OPTIONS = {
   streetViewControl: false
 }
 
-var HEATMAP_GROUPS = {};
+var HEATMAP_DATA = {};
 
 // The dots are more visible on the map with a higher weight.
 const VISIBLE_WEIGHT_MULTIPLIER = 1;
 const VISIBLE_WEIGHT_EXPONENT = 2;
 const MAX_INTENSITY = 5;
 
-function minimumWeight([lat, lng, weight]) {
-  const threshold = parseInt(MAP_THRESHOLD.value);
+function minimumWeight ([lat, lng, weight]) {
+  const threshold = parseInt(HTML_MAP_THRESHOLD.value);
   return weight >= threshold;
 }
 
-function parseLine([lat, lng, weight]) {
+function parseLine ([lat, lng, weight]) {
   const location = new google.maps.LatLng(lat, lng);
   
   // Actual weight values range from 1-5, so we need to crank that up to make the points visible on the map.
@@ -37,20 +37,20 @@ function parseLine([lat, lng, weight]) {
   return { location, weight: visibleWeight };
 }
 
-function filteredMapData(results) {
+function filteredMapData (results) {
   return results.data
     .filter(minimumWeight)
     .map(parseLine);
 }
 
 function selectLayerByUrl (url) {
-  const group = Object.values(HEATMAP_GROUPS).find(group => !!group.layers[url]);
+  const group = Object.values(HEATMAP_DATA).find(group => !!group.layers[url]);
   const layer = group && group.layers[url];
   return { group, layer };
 }
 
 function selectAllLayers () {
-  return Object.values(HEATMAP_GROUPS)
+  return Object.values(HEATMAP_DATA)
     .map(group => {
       return (group.layers && Object.values(group.layers))
         || []
@@ -95,9 +95,9 @@ function readMapFile (url, resolver) {
   Papa.parse(url, config);
 }
 
-function fitEventBounds() {
+function fitEventBounds () {
   API.event(eventName)
-  .then(function (event) {
+  .then((event) => {
     const boundingBoxCoords = event.bounding_box_coords;
     if (boundingBoxCoords) {
       const SW = new google.maps.LatLng(boundingBoxCoords[1], boundingBoxCoords[0]);
@@ -113,9 +113,9 @@ function fitEventBounds() {
 
 function zoomToFit () {
   const bounds  = new google.maps.LatLngBounds();
-  selectAllLayers().forEach(function (layer) {
+  selectAllLayers().forEach((layer) => {
     const data = layer.show && layer.heatmap && layer.heatmap.getData() || [];
-    data.forEach(function (point) {
+    data.forEach((point) => {
       bounds.extend(point.location);
     });
   });
@@ -124,7 +124,7 @@ function zoomToFit () {
 }
 
 const center = new google.maps.LatLng(15.231458142, -61.2507115);
-const GOOGLE_MAP = new google.maps.Map(MAP_CONTAINER, Object.assign(MAP_OPTIONS, { center }));
+const GOOGLE_MAP = new google.maps.Map(HTML_MAP_CONTAINER, Object.assign(MAP_OPTIONS, { center }));
 
 const eventName = queryParams().event;
 const pendingLayers = queryParams().pending;
@@ -141,9 +141,9 @@ if (pendingLayers) {
 
 class MapApp {
   constructor () {
-    // MAP_SELECT_FORM.addEventListener('change', this.updateSelectedMap);
-    MAP_THRESHOLD.addEventListener('change', this.renderMap.bind(this));
-    ZOOM_TO_FIT.addEventListener('click', zoomToFit);
+    // HTML_MAP_SELECT.addEventListener('change', this.updateSelectedMap);
+    HTML_MAP_THRESHOLD.addEventListener('change', this.renderMap.bind(this));
+    HTML_ZOOM_TO_FIT.addEventListener('click', zoomToFit);
     
     this.fetchMapData();
   }
@@ -152,7 +152,7 @@ class MapApp {
     API[getLayerFunc](eventName, layer)
       .then(this.saveMapData.bind(this))
       .then(this.buildMapControls.bind(this))
-      .then(function () {
+      .then(() => {
         if (layer) {
           window.mapApp.renderMap(zoomToFit);
         } else {
@@ -164,10 +164,10 @@ class MapApp {
   
   saveMapData (layerGroups) {
     // Record data in global store.
-    HEATMAP_GROUPS = {};
-    layerGroups.forEach(function (group) {
+    HEATMAP_DATA = {};
+    layerGroups.forEach((group) => {
       let layers = {};
-      group.layers.forEach(function (layer, index) {
+      group.layers.forEach((layer, index) => {
         const metadata = (group.metadata && group.metadata.layers && group.metadata.layers[index]) || {};
         layers[layer.url] = {
           name: layer.name,
@@ -181,27 +181,27 @@ class MapApp {
           csvData: undefined,
           show: false,
         };
-      }.bind(this))
+      })
 
-      HEATMAP_GROUPS[group.version] = {
+      HEATMAP_DATA[group.version] = {
         version: group.version,
         name: group.metadata.AOI,
         metadataUrl: group.metadata_url,
         layers,
       };
-    }.bind(this));
+    });
     
     return layerGroups;
   }
   
   buildMapControls (layerGroups) {
-    document.querySelectorAll('#map-select .group').forEach(function (node) {
-      MAP_SELECT_FORM.removeChild(node);
+    document.querySelectorAll('#map-select .group').forEach((node) => {
+      HTML_MAP_SELECT.removeChild(node);
     });
     
-    Object.values(HEATMAP_GROUPS)
+    Object.values(HEATMAP_DATA)
       .map(this.buildMapControls_groupHtml.bind(this))
-      .forEach(function (htmlGroup) { MAP_SELECT_FORM.appendChild(htmlGroup) });
+      .forEach((htmlGroup) => { HTML_MAP_SELECT.appendChild(htmlGroup) });
     
     // TODO: select one of the maps.
   }
@@ -234,15 +234,15 @@ class MapApp {
       htmlApproveButton.textContent = 'Approve';
       htmlSubmenu.appendChild(htmlApproveButton);
 
-      htmlApproveButton.onclick = function (e) {
+      htmlApproveButton.onclick = (e) => {
         htmlApproveButton.textContent = 'Approving...';
-        htmlApproveButton.onclick = function (e2) { e2 && e2.preventDefault(); return false };  //Cancel out the approve button
+        htmlApproveButton.onclick = (e2) => { e2 && e2.preventDefault(); return false };  //Cancel out the approve button
 
         API.approve(eventName, layerGroup.version)
-          .then(function (res) {
+          .then((res) => {
             htmlApproveButton.textContent = 'DONE!';
           })
-          .catch(function (err) {
+          .catch((err) => {
             console.error(err);
             htmlApproveButton.textContent = 'ERROR';
           });
@@ -253,8 +253,8 @@ class MapApp {
     }
 
     Object.values(layerGroup.layers)
-      .map(function (layer) { return this.buildMapControls_layerHtml(layer, layerGroup) }.bind(this))
-      .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
+      .map((layer) => { return this.buildMapControls_layerHtml(layer, layerGroup) })
+      .forEach((htmlLayer) => { htmlGroup.appendChild(htmlLayer) });
 
     return htmlGroup;
   }
@@ -284,7 +284,7 @@ class MapApp {
     if (legends && legends.length > 0) {
       const ol = document.createElement('ol');
       ol.className = 'layer-control-legends';
-      legends.forEach(function (legend, index) {
+      legends.forEach((legend, index) => {
         const li = document.createElement('li');
         li.textContent = legend;
         li.dataset.legendValue = index + 1;
@@ -342,13 +342,13 @@ class MapApp {
   }
   
   updateMapControlsUI () {
-    const threshold = parseInt(MAP_THRESHOLD.value);
-    const thresholdMin = Number.parseInt(MAP_THRESHOLD.min);
-    const thresholdMax = Number.parseInt(MAP_THRESHOLD.max);
+    const threshold = parseInt(HTML_MAP_THRESHOLD.value);
+    const thresholdMin = Number.parseInt(HTML_MAP_THRESHOLD.min);
+    const thresholdMax = Number.parseInt(HTML_MAP_THRESHOLD.max);
 
     for (let val = thresholdMin; val <= thresholdMax; val++) {
       const selectedElements = document.querySelectorAll(`.layer-control-legends li[data-legend-value='${val}']`);
-      Array.from(selectedElements).forEach(function (element) {
+      Array.from(selectedElements).forEach((element) => {
         if (val >= threshold) element.className = 'selected';
         else element.className = 'unselected';
       });
