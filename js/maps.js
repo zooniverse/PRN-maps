@@ -193,8 +193,6 @@ class MapApp {
       .map(this.buildMapControls_groupHtml.bind(this))
       .forEach((htmlGroup) => { HTML_MAP_SELECT.appendChild(htmlGroup) });
     
-    console.log('+++ buildMapControls');
-    
     // Select the first layer by default
     const defaultLayer = selectAllLayers()[0];
     defaultLayer && window.mapApp.activateLayer(defaultLayer);
