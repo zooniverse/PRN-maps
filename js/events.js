@@ -1,3 +1,5 @@
+import { API } from './api.js';
+
 const EVENTS_LIST = document.getElementById('events');
 function createAnchor(href, textContent) {
   const link = document.createElement('a');
@@ -11,7 +13,7 @@ function buildEventLinks(event) {
   const uploadHref = "/maps/upload.html?event=" + event.name;
   const eventLink = createAnchor(eventHref, event.name);
   const pendingLink = createAnchor(pendingHref, "pending layers");
-  const uploadLink = createAnchor(uploadHref, "upload layers"); 
+  const uploadLink = createAnchor(uploadHref, "upload layers");
   const item = document.createElement('li')
   item.appendChild(eventLink);
   item.appendChild(document.createTextNode(' '));

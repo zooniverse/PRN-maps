@@ -1,4 +1,5 @@
-import { queryParams } from './queryParams.js'
+import { queryParams } from './queryParams.js';
+import { API } from './api.js';
 
 const HTML_MAP_CONTAINER = document.getElementById('map');
 const HTML_MAP_THRESHOLD = document.getElementById('map-threshold');
@@ -30,10 +31,10 @@ function minimumWeight ([lat, lng, weight]) {
 
 function parseLine ([lat, lng, weight]) {
   const location = new google.maps.LatLng(lat, lng);
-  
+
   // Actual weight values range from 1-5, so we need to crank that up to make the points visible on the map.
   const visibleWeight = Math.pow((weight), VISIBLE_WEIGHT_EXPONENT) * VISIBLE_WEIGHT_MULTIPLIER;
-  
+
   return { location, weight: visibleWeight };
 }
 
