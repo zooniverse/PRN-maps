@@ -325,22 +325,19 @@ class MapApp {
   
   renderMap (resolveFunction) {
     // For each map, show/hide them as necessary.
-    Object.values(HEATMAP_GROUPS)
-      .forEach((group) => {
-        group.layers && Object.values(group.layers).forEach((layer) => {
-          if (!layer.show) {
-            layer.heatmap && layer.heatmap.setMap(null);
-          } else {
-            if (layer && layer.heatmap) {
-              const heatmapData = filteredMapData(layer.csvData);
-              layer.heatmap.setData(heatmapData);
-              layer.heatmap.setMap(GOOGLE_MAP);
-            } else {
-              readMapFile(layer.url, resolveFunction);
-            }
-          }
-        });
-      });
+    selectAllLayers().forEach((layer) => {
+      if (!layer.show) {
+        layer.heatmap && layer.heatmap.setMap(null);
+      } else {
+        if (layer && layer.heatmap) {
+          const heatmapData = filteredMapData(layer.csvData);
+          layer.heatmap.setData(heatmapData);
+          layer.heatmap.setMap(GOOGLE_MAP);
+        } else {
+          readMapFile(layer.url, resolveFunction);
+        }
+      }
+    });
     this.updateMapControlsUI();
   }
   
@@ -365,12 +362,7 @@ class MapApp {
   }
   
   deactivateAllLayers () {
-    Object.values(HEATMAP_GROUPS)
-      .forEach((group) => {
-        group.layers && Object.values(group.layers).forEach((layer) => {
-          layer.show = false;
-        });
-      });
+    selectAllLayers().forEach((layer) => { layer.show = false; });
   }
 }
 
