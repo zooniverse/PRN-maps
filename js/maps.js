@@ -49,6 +49,15 @@ function selectLayerByUrl (url) {
   return { group, layer };
 }
 
+function selectAllLayers () {
+  return Object.values(HEATMAP_GROUPS)
+    .map(group => {
+      return (group.layers && Object.values(group.layers))
+        || []
+    })
+    .flat();
+}
+
 function parseMapData (results, url) {
   const { group, layer } = selectLayerByUrl(url);
   if (!layer) return;
@@ -102,20 +111,14 @@ function fitEventBounds() {
   })
 }
 
-function zoomToFit() {
+function zoomToFit () {
   const bounds  = new google.maps.LatLngBounds();
-  
-  // TODO: fix ZoomToFit
-  
-  /* MAP_SELECT_FORM.querySelectorAll('input:checked')
-    .forEach(function (node) {
-      const url = node.value;
-      const { group, layer } = selectLayerByUrl(url);
-      const data = layer.heatmap && layer.heatmap.getData();
-      data.forEach(function (point) {
-        bounds.extend(point.location);
-      });
-    });*/
+  selectAllLayers().forEach(function (layer) {
+    const data = layer.show && layer.heatmap && layer.heatmap.getData() || [];
+    data.forEach(function (point) {
+      bounds.extend(point.location);
+    });
+  });
   GOOGLE_MAP.fitBounds(bounds);
   GOOGLE_MAP.panToBounds(bounds);
 }
