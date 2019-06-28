@@ -2,7 +2,7 @@ import { queryParams } from './queryParams.js'
 
 const MAP_CONTAINER = document.getElementById('map');
 const MAP_THRESHOLD = document.getElementById('map-threshold');
-const MAP_SELECT = document.getElementById('map-select');
+const MAP_SELECT_FORM = document.getElementById('map-select');
 const ZOOM_TO_FIT = document.getElementById('zoom-to-fit');
 const MAP_OPTIONS = {
   zoom: 10,
@@ -86,54 +86,6 @@ function readMapFile (url, resolver) {
   Papa.parse(url, config);
 }
 
-function toggleLayer (event) {
-  const url = event.target.value;
-  const { group, layer } = selectLayerByUrl(url);
-  
-  if (event.target.checked) {
-    if (layer) {
-      layer.heatmap.setMap(GOOGLE_MAP);
-    } else {
-      readMapFile(url);
-    }
-  } else {
-    layer.heatmap && layer.heatmap.setMap(null);
-  }
-}
-
-function toggleMultipleLayers(layerGroupVersion) {
-  const checkboxes = Array.from(document.querySelectorAll(`.layer-control[data-group='${layerGroupVersion}'] input[type='checkbox']`));
-  
-  checkboxes.forEach(function (checkbox) {
-    const url = checkbox.value;
-    const { group, layer } = selectLayerByUrl(url);
-    
-    if (checkbox.checked) {
-      if (layer) {
-        layer.heatmap.setMap(GOOGLE_MAP);
-      } else {
-        readMapFile(url);
-      }
-    } else {
-      layer.heatmap && layer.heatmap.setMap(null);
-    }
-  });
-}
-
-function updateMapControlsUI () {
-  const threshold = parseInt(MAP_THRESHOLD.value);
-  const thresholdMin = Number.parseInt(MAP_THRESHOLD.min);
-  const thresholdMax = Number.parseInt(MAP_THRESHOLD.max);
-  
-  for (let val = thresholdMin; val <= thresholdMax; val++) {
-    const selectedElements = document.querySelectorAll(`.layer-control-legends li[data-legend-value='${val}']`);
-    Array.from(selectedElements).forEach(function (element) {
-      if (val >= threshold) element.className = 'selected';
-      else element.className = 'unselected';
-    });
-  }
-}
-
 function fitEventBounds() {
   API.event(eventName)
   .then(function (event) {
@@ -152,7 +104,10 @@ function fitEventBounds() {
 
 function zoomToFit() {
   const bounds  = new google.maps.LatLngBounds();
-  MAP_SELECT.querySelectorAll('input:checked')
+  
+  // TODO: fix ZoomToFit
+  
+  /* MAP_SELECT_FORM.querySelectorAll('input:checked')
     .forEach(function (node) {
       const url = node.value;
       const { group, layer } = selectLayerByUrl(url);
@@ -160,7 +115,7 @@ function zoomToFit() {
       data.forEach(function (point) {
         bounds.extend(point.location);
       });
-    });
+    });*/
   GOOGLE_MAP.fitBounds(bounds);
   GOOGLE_MAP.panToBounds(bounds);
 }
@@ -183,7 +138,7 @@ if (pendingLayers) {
 
 class MapApp {
   constructor () {
-    MAP_SELECT.addEventListener('change', toggleLayer);
+    // MAP_SELECT_FORM.addEventListener('change', this.updateSelectedMap);
     MAP_THRESHOLD.addEventListener('change', this.renderMap);
     ZOOM_TO_FIT.addEventListener('click', zoomToFit);
     
@@ -221,7 +176,7 @@ class MapApp {
           gradient: this.chooseLayerGradient(index),
           heatmap: undefined,
           csvData: undefined,
-          show: true,
+          show: false,
         };
       }.bind(this))
 
@@ -238,12 +193,14 @@ class MapApp {
   
   buildMapControls (layerGroups) {
     document.querySelectorAll('#map-select .group').forEach(function (node) {
-      MAP_SELECT.removeChild(node);
+      MAP_SELECT_FORM.removeChild(node);
     });
     
     Object.values(HEATMAP_GROUPS)
       .map(this.buildMapControls_groupHtml.bind(this))
-      .forEach(function (htmlGroup) { MAP_SELECT.appendChild(htmlGroup) });
+      .forEach(function (htmlGroup) { MAP_SELECT_FORM.appendChild(htmlGroup) });
+    
+    // TODO: select one of the maps.
   }
   
   buildMapControls_groupHtml (layerGroup) {
@@ -263,7 +220,7 @@ class MapApp {
 
     const htmlMetadataLink = document.createElement('a');
     htmlMetadataLink.className = 'metadata-link';
-    htmlMetadataLink.href = layerGroup.metadata_url;
+    htmlMetadataLink.href = layerGroup.metadataUrl;
     htmlMetadataLink.target = '_blank';
     htmlMetadataLink.textContent = 'Metadata';
     htmlSubmenu.appendChild(htmlMetadataLink);
@@ -296,41 +253,26 @@ class MapApp {
       .map(function (layer) { return this.buildMapControls_layerHtml(layer, layerGroup) }.bind(this))
       .forEach(function (htmlLayer) { htmlGroup.appendChild(htmlLayer) });
 
-    // Add toggle option
-    const htmlToggle = document.createElement('button');
-    htmlToggle.textContent = 'Toggle group';
-    htmlToggle.onclick = function (e) {
-      const version = layerGroup.version;
-      const checkboxes = Array.from(document.querySelectorAll(`.layer-control[data-group='${version}'] input[type='checkbox']`));
-
-      //If any checkboxes are checked, uncheck them all. Otherwise, check them all.
-      const anySelected = !!checkboxes.find(function (checkbox) { return checkbox.checked });
-      checkboxes.forEach(function (checkbox) { checkbox.checked = !anySelected });
-
-      toggleMultipleLayers(version);
-
-      e && e.preventDefault();
-      return false;
-    };
-    htmlGroup.appendChild(htmlToggle);
-
     return htmlGroup;
   }
   
   buildMapControls_layerHtml (layer, layerGroup) {
     const div = document.createElement('div');
     const label = document.createElement('label');
-    const checkbox = document.createElement('input');
+    const input = document.createElement('input');
     const span = document.createElement('span');
 
     span.textContent = layer.description;
 
-    checkbox.type = 'checkbox';
-    checkbox.value = layer.url;
-    checkbox.checked = true;
+    input.type = 'radio';
+    input.name = 'layer-control-input';
+    input.value = layer.url;
+    input.addEventListener('change', () => {
+      this.activateLayer(layer);
+    });
 
     label.style.borderRight = `0.5em solid ${layer.colour}`;
-    label.appendChild(checkbox)
+    label.appendChild(input)
     label.appendChild(span);
     div.appendChild(label);
 
@@ -379,29 +321,53 @@ class MapApp {
   }
   
   renderMap (resolveFunction) {
+    // For each map, show/hide them as necessary.
     Object.values(HEATMAP_GROUPS)
       .forEach((group) => {
         group.layers && Object.values(group.layers).forEach((layer) => {
-          layer.heatmap && layer.heatmap.setMap(null);
-          
-          // TODO: instead of checking MAP_SELECT, use layer.show && && layer.heatmap && layer.heatmap.setMap(something);
+          if (!layer.show) {
+            layer.heatmap && layer.heatmap.setMap(null);
+          } else {
+            if (layer && layer.heatmap) {
+              const heatmapData = filteredMapData(layer.csvData);
+              layer.heatmap.setData(heatmapData);
+              layer.heatmap.setMap(GOOGLE_MAP);
+            } else {
+              readMapFile(layer.url, resolveFunction);
+            }
+          }
         });
       });
-    
-    MAP_SELECT.querySelectorAll('input:checked')
-      .forEach(function (node) {
-        const url = node.value;
-        const { group, layer } = selectLayerByUrl(url);
-      
-        if (layer && layer.heatmap) {
-          const heatmapData = filteredMapData(layer.csvData);
-          layer.heatmap.setData(heatmapData);
-          layer.heatmap.setMap(GOOGLE_MAP);
-        } else {
-          readMapFile(url, resolveFunction);
-        }
-      })
-    updateMapControlsUI();
+    this.updateMapControlsUI();
+  }
+  
+  updateMapControlsUI () {
+    const threshold = parseInt(MAP_THRESHOLD.value);
+    const thresholdMin = Number.parseInt(MAP_THRESHOLD.min);
+    const thresholdMax = Number.parseInt(MAP_THRESHOLD.max);
+
+    for (let val = thresholdMin; val <= thresholdMax; val++) {
+      const selectedElements = document.querySelectorAll(`.layer-control-legends li[data-legend-value='${val}']`);
+      Array.from(selectedElements).forEach(function (element) {
+        if (val >= threshold) element.className = 'selected';
+        else element.className = 'unselected';
+      });
+    }
+  }
+  
+  activateLayer (layer) {
+    this.deactivateAllLayers();
+    layer.show = true;
+    this.renderMap();
+  }
+  
+  deactivateAllLayers () {
+    Object.values(HEATMAP_GROUPS)
+      .forEach((group) => {
+        group.layers && Object.values(group.layers).forEach((layer) => {
+          layer.show = false;
+        });
+      });
   }
 }
 
