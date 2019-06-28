@@ -142,7 +142,7 @@ if (pendingLayers) {
 class MapApp {
   constructor () {
     // MAP_SELECT_FORM.addEventListener('change', this.updateSelectedMap);
-    MAP_THRESHOLD.addEventListener('change', this.renderMap);
+    MAP_THRESHOLD.addEventListener('change', this.renderMap.bind(this));
     ZOOM_TO_FIT.addEventListener('click', zoomToFit);
     
     this.fetchMapData();
