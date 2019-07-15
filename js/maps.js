@@ -21,8 +21,7 @@ var HEATMAP_DATA = {};  // TODO: move this into MapApp
 
 // The dots are more visible on the map with a higher weight.
 const VISIBLE_WEIGHT_MULTIPLIER = 1;
-const VISIBLE_WEIGHT_EXPONENT = 2;
-const MAX_INTENSITY = 5;
+const VISIBLE_WEIGHT_EXPONENT = 1;
 
 function minimumWeight ([lat, lng, weight]) {
   const threshold = parseInt(HTML_MAP_THRESHOLD.value);
@@ -73,24 +72,44 @@ function parseMapData (results, layer) {
   
   if (layer.hasSingleIntensity()) {
     
+    const MAX_INTENSITY = 2;
+    
     // If a heatmap already exists, remove it.
-    if (layer.heatmap) layer.heatmap.setMap(null);
+    layer.hideHeatmap();
 
     // Add the new heatmap
     layer.heatmap = new google.maps.visualization.HeatmapLayer({
       gradient: layer.gradient,
-      maxIntensity: MAX_INTENSITY,  // TODO: change level of maxIntensity based on metadata
+      maxIntensity: MAX_INTENSITY,
       opacity: 1
     });
-
-    const heatmapData = filteredMapData(results);
-    layer.heatmap.setData(heatmapData);
-    layer.heatmap.setMap(GOOGLE_MAP);
+    
+    layer.showHeatmap(GOOGLE_MAP);
     
   } else {
     
+    const MAX_INTENSITY = (layer.legend && layer.legend.length) || 1;
+    
+    // If a heatmap already exists, remove it.
+    layer.hideHeatmap();
+
+    // Add the new heatmap _for each intensity_ (each legend item = 1 intensity)
+    layer.heatmap = [];
+    
     // TODO
     
+    layer.legend && layer.legend.forEach((legend, index) => {
+      const newHeatmap = new google.maps.visualization.HeatmapLayer({
+        gradient: layer.gradient[index],
+        maxIntensity: MAX_INTENSITY,
+        opacity: 1
+      });
+      
+      layer.heatmap.push(newHeatmap);
+    });
+
+    layer.showHeatmap(GOOGLE_MAP);
+
   }
 }
 
@@ -196,8 +215,19 @@ class Layer {
       this.heatmap.setData(heatmapData);
       this.heatmap.setMap(targetMap);
     } else {
-      Array.isArray(this.heatmap) && this.heatmap.forEach((heatmap) => {
+      Array.isArray(this.heatmap) && this.heatmap.forEach((heatmap, index) => {
         // TODO
+        
+        const intensity = index + 2;
+        
+        const heatmapData = this.csvData && this.csvData.data
+          .filter(([lat, lng, weight]) => {
+            return weight == intensity;
+          })
+          .map(parseLine);
+        
+        heatmap.setData(heatmapData);
+        heatmap.setMap(targetMap);
       });
     }
   }
@@ -247,14 +277,16 @@ class MapApp {
       let layers = {};
       group.layers.forEach((layer, index) => {
         const metadata = (group.metadata && group.metadata.layers && group.metadata.layers[index]) || {};
+        const hasMultipleIntensities = metadata.legend && metadata.legend.length > 1;
+        
         layers[layer.url] = new Layer({
           name: layer.name,
           group: group.version,
           url: layer.url,
           description: metadata.description,
           legend: metadata.legend,
-          colour: this.chooseLayerColour(index),
-          gradient: this.chooseLayerGradient(index),
+          colour: this.chooseLayerColour(index, hasMultipleIntensities),
+          gradient: this.chooseLayerGradient(index, hasMultipleIntensities),
           heatmap: undefined,
           csvData: undefined,
           show: false,
@@ -383,24 +415,36 @@ class MapApp {
     return div;
   }
   
-  chooseLayerColour (index) {
+  chooseLayerColour (index, hasMultipleIntensities) {
+    if (hasMultipleIntensities) return 'rgba(255, 0, 0, 1.0)';
+    
     const colours = [
       'rgba(255, 255, 0, 1.0)',
       'rgba(255, 0, 255, 1.0)',
       'rgba(0, 255, 255, 1.0)',
-      'rgba(255, 0, 0, 1.0)',
       'rgba(0, 255, 0, 1.0)',
+      'rgba(255, 0, 0, 1.0)',
     ];
     return colours[Math.min(index, colours.length - 1)];
   }
   
-  chooseLayerGradient (index) {
+  chooseLayerGradient (index, hasMultipleIntensities) {
+    if (hasMultipleIntensities) {
+      return [
+        [ 'rgba(255, 128, 0, 0.0)', 'rgba(255, 128, 0, 0.5)', ],
+        [ 'rgba(255, 96, 0, 0.0)', 'rgba(255, 96, 0, 0.5)', ],
+        [ 'rgba(255, 64, 0, 0.0)', 'rgba(255, 64, 0, 0.5)', ],
+        [ 'rgba(255, 32, 0, 0.0)', 'rgba(255, 32, 0, 0.5)', ],
+        [ 'rgba(255, 0, 0, 0.0)', 'rgba(255, 0, 0, 0.5)', ],
+      ];
+    }
+    
     const colours = [
       [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 255, 0, 0.5)', ],
       [ 'rgba(255, 0, 255, 0.0)', 'rgba(255, 0, 255, 0.5)', ],
       [ 'rgba(0, 255, 255, 0.0)', 'rgba(0, 255, 255, 0.5)', ],
-      [ 'rgba(255, 0, 0, 0.0)', 'rgba(255, 0, 0, 0.5)', ],
       [ 'rgba(0, 255, 0, 0.0)', 'rgba(0, 255, 0, 0.5)', ],
+      [ 'rgba(255, 0, 0, 0.0)', 'rgba(255, 0, 0, 0.5)', ],
     ];
     return colours[Math.min(index, colours.length - 1)];
   }
