@@ -129,6 +129,34 @@ if (pendingLayers) {
   getLayerFunc = 'layer';
 }
 
+class LayerGroup {
+  constructor (initialProps) {
+    this.version = '',
+    this.name = '',
+    this.metadataUrl = '',
+    this.layers = [];
+    
+    Object.assign(this, initialProps);
+  }
+}
+
+class Layer {
+  constructor (initialProps) {
+    this.name = '',
+    this.group = '',
+    this.url = '',
+    this.description = '';
+    this.legend = undefined;
+    this.colour = [];
+    this.gradient = [];
+    this.heatmap = undefined;
+    this.csvData = undefined;
+    this.show = false;
+    
+    Object.assign(this, initialProps);
+  }
+}
+
 class MapApp {
   constructor () {
     // HTML_MAP_SELECT.addEventListener('change', this.updateSelectedMap);
@@ -159,7 +187,7 @@ class MapApp {
       let layers = {};
       group.layers.forEach((layer, index) => {
         const metadata = (group.metadata && group.metadata.layers && group.metadata.layers[index]) || {};
-        layers[layer.url] = {
+        layers[layer.url] = new Layer({
           name: layer.name,
           group: group.version,
           url: layer.url,
@@ -170,15 +198,15 @@ class MapApp {
           heatmap: undefined,
           csvData: undefined,
           show: false,
-        };
+        });
       })
 
-      HEATMAP_DATA[group.version] = {
+      HEATMAP_DATA[group.version] = new LayerGroup({
         version: group.version,
         name: group.metadata.AOI,
         metadataUrl: group.metadata_url,
         layers,
-      };
+      });
     });
     
     return layerGroups;
