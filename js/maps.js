@@ -24,8 +24,7 @@ const VISIBLE_WEIGHT_MULTIPLIER = 1;
 const VISIBLE_WEIGHT_EXPONENT = 1;
 
 function minimumWeight ([lat, lng, weight]) {
-  const threshold = parseInt(HTML_MAP_THRESHOLD.value);
-  return weight >= threshold;
+  return weight > 1;  // Data context: for PRN maps, every point on the map has a minimum weight of 1.
 }
 
 function parseLine ([lat, lng, weight]) {
@@ -88,15 +87,16 @@ function parseMapData (results, layer) {
     
   } else {
     
-    const MAX_INTENSITY = (layer.legend && layer.legend.length) || 1;
+    const MAX_INTENSITY = 2;  // Artificially lower the intensity instead of using layer.legend.length
+    // Context: this creates better visuals since the differentiator between
+    // intensities should be the colours, not necessarily the opacity & size
+    //  as is the default with Google heatmaps.
     
     // If a heatmap already exists, remove it.
     layer.hideHeatmap();
 
     // Add the new heatmap _for each intensity_ (each legend item = 1 intensity)
     layer.heatmap = [];
-    
-    // TODO
     
     layer.legend && layer.legend.forEach((legend, index) => {
       const newHeatmap = new google.maps.visualization.HeatmapLayer({
@@ -216,13 +216,11 @@ class Layer {
       this.heatmap.setMap(targetMap);
     } else {
       Array.isArray(this.heatmap) && this.heatmap.forEach((heatmap, index) => {
-        // TODO
-        
-        const intensity = index + 2;
+        const intensity = index + 2;  // TODO: check this arbitrary maths
         
         const heatmapData = this.csvData && this.csvData.data
           .filter(([lat, lng, weight]) => {
-            return weight == intensity;
+            return weight == intensity;  // TODO: check that this doesn't miss out on anything
           })
           .map(parseLine);
         
@@ -431,11 +429,11 @@ class MapApp {
   chooseLayerGradient (index, hasMultipleIntensities) {
     if (hasMultipleIntensities) {
       return [
-        [ 'rgba(255, 128, 0, 0.0)', 'rgba(255, 128, 0, 0.5)', ],
-        [ 'rgba(255, 96, 0, 0.0)', 'rgba(255, 96, 0, 0.5)', ],
-        [ 'rgba(255, 64, 0, 0.0)', 'rgba(255, 64, 0, 0.5)', ],
-        [ 'rgba(255, 32, 0, 0.0)', 'rgba(255, 32, 0, 0.5)', ],
-        [ 'rgba(255, 0, 0, 0.0)', 'rgba(255, 0, 0, 0.5)', ],
+        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 255, 0, 0.5)', ],
+        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 192, 0, 0.5)', ],
+        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 128, 0, 0.5)', ],
+        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 64, 0, 0.5)', ],
+        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 0, 0, 0.5)', ],
       ];
     }
     
