@@ -70,19 +70,28 @@ function cacheMapData (results, file, layer) {
 }
 
 function parseMapData (results, layer) {
-  // If a heatmap already exists, remove it.
-  if (layer.heatmap) layer.heatmap.setMap(null);
   
-  // Add the new heatmap
-  layer.heatmap = new google.maps.visualization.HeatmapLayer({
-    gradient: layer.gradient,
-    maxIntensity: MAX_INTENSITY,  // TODO: change level of maxIntensity based on metadata
-    opacity: 1
-  });
-  
-  const heatmapData = filteredMapData(results);
-  layer.heatmap.setData(heatmapData);
-  layer.heatmap.setMap(GOOGLE_MAP);
+  if (!layer.hasMultipleHeatmaps()) {
+    
+    // If a heatmap already exists, remove it.
+    if (layer.heatmap) layer.heatmap.setMap(null);
+
+    // Add the new heatmap
+    layer.heatmap = new google.maps.visualization.HeatmapLayer({
+      gradient: layer.gradient,
+      maxIntensity: MAX_INTENSITY,  // TODO: change level of maxIntensity based on metadata
+      opacity: 1
+    });
+
+    const heatmapData = filteredMapData(results);
+    layer.heatmap.setData(heatmapData);
+    layer.heatmap.setMap(GOOGLE_MAP);
+    
+  } else {
+    
+    // TODO
+    
+  }
 }
 
 function fitEventBounds () {
@@ -104,10 +113,14 @@ function fitEventBounds () {
 function zoomToFit () {
   const bounds  = new google.maps.LatLngBounds();
   selectAllLayers().forEach((layer) => {
-    const data = layer.show && layer.heatmap && layer.heatmap.getData() || [];
-    data.forEach((point) => {
-      bounds.extend(point.location);
-    });
+    if (!layer.hasMultipleHeatmaps()) {
+      const data = layer.show && layer.heatmap && layer.heatmap.getData() || [];
+      data.forEach((point) => {
+        bounds.extend(point.location);
+      });
+    } else {
+      // TODO
+    }
   });
   GOOGLE_MAP.fitBounds(bounds);
   GOOGLE_MAP.panToBounds(bounds);
@@ -129,6 +142,9 @@ if (pendingLayers) {
   getLayerFunc = 'layer';
 }
 
+/*
+A "LayerGroup" is exactly what the name implies. Identified by its 'version'.
+ */
 class LayerGroup {
   constructor (initialProps) {
     this.version = '',
@@ -140,26 +156,66 @@ class LayerGroup {
   }
 }
 
+/*
+A "Layer" represents a single grouping of data on the map. Identified by its
+'url'.
+
+Note: if a Layer has Legends (i.e. it has a range of Intensity values instead
+of a single true/false Intensity), it follows a different logic - it has
+multiple heatmap objects (instead of one), to reflect each intensity value.
+ */
 class Layer {
   constructor (initialProps) {
     this.name = '',
     this.group = '',
     this.url = '',
     this.description = '';
-    this.legend = undefined;
+    this.legend = [];
     this.colour = [];
     this.gradient = [];
-    this.heatmap = undefined;
+    this.heatmap = undefined;  // Either a single object, or an array.
     this.csvData = undefined;
     this.show = false;
     
     Object.assign(this, initialProps);
   }
+  
+  hasMultipleHeatmaps () {
+    return (this.legend && this.legend.length > 0) || (this.heatmap && Array.isArray(this.heatmap));
+  }
+  
+  showHeatmap (targetMap) {
+    if (!this.heatmap) return;
+    
+    if (!this.hasMultipleHeatmaps()) {
+      const heatmapData = filteredMapData(this.csvData);
+      this.heatmap.setData(heatmapData);
+      this.heatmap.setMap(targetMap);
+    } else {
+      Array.isArray(this.heatmap) && this.heatmap.forEach((heatmap) => {
+        // TODO
+      });
+    }
+  }
+  
+  hideHeatmap () {
+    if (!this.heatmap) return;
+    
+    if (!this.hasMultipleHeatmaps()) {
+      this.heatmap.setMap(null);
+    } else {
+      Array.isArray(this.heatmap) && this.heatmap.forEach((heatmap) => {
+        heatmap.setMap(null);
+      });
+    }
+  }
 }
 
+/*
+MapApp is the primary engine for showing and controlling maps on the web page.
+ */
 class MapApp {
   constructor () {
-    // HTML_MAP_SELECT.addEventListener('change', this.updateSelectedMap);
     HTML_MAP_THRESHOLD.addEventListener('change', this.renderMap.bind(this));
     HTML_ZOOM_TO_FIT.addEventListener('click', zoomToFit);
     
@@ -349,12 +405,10 @@ class MapApp {
     // For each map, show/hide them as necessary.
     selectAllLayers().forEach((layer) => {
       if (!layer.show) {
-        layer.heatmap && layer.heatmap.setMap(null);
+        layer.hideHeatmap();
       } else {
         if (layer && layer.heatmap) {
-          const heatmapData = filteredMapData(layer.csvData);
-          layer.heatmap.setData(heatmapData);
-          layer.heatmap.setMap(GOOGLE_MAP);
+          layer.showHeatmap(GOOGLE_MAP);
         } else {
           readMapFile(layer, resolveFunction);
         }
