@@ -71,7 +71,7 @@ function cacheMapData (results, file, layer) {
 
 function parseMapData (results, layer) {
   
-  if (!layer.hasMultipleHeatmaps()) {
+  if (layer.hasSingleIntensity()) {
     
     // If a heatmap already exists, remove it.
     if (layer.heatmap) layer.heatmap.setMap(null);
@@ -113,7 +113,7 @@ function fitEventBounds () {
 function zoomToFit () {
   const bounds  = new google.maps.LatLngBounds();
   selectAllLayers().forEach((layer) => {
-    if (!layer.hasMultipleHeatmaps()) {
+    if (layer.hasSingleIntensity()) {
       const data = layer.show && layer.heatmap && layer.heatmap.getData() || [];
       data.forEach((point) => {
         bounds.extend(point.location);
@@ -180,14 +180,18 @@ class Layer {
     Object.assign(this, initialProps);
   }
   
-  hasMultipleHeatmaps () {
+  hasSingleIntensity () {
+    return !this.hasMultipleIntensities();
+  }
+  
+  hasMultipleIntensities () {
     return (this.legend && this.legend.length > 0) || (this.heatmap && Array.isArray(this.heatmap));
   }
   
   showHeatmap (targetMap) {
     if (!this.heatmap) return;
     
-    if (!this.hasMultipleHeatmaps()) {
+    if (this.hasSingleIntensity()) {
       const heatmapData = filteredMapData(this.csvData);
       this.heatmap.setData(heatmapData);
       this.heatmap.setMap(targetMap);
@@ -201,7 +205,7 @@ class Layer {
   hideHeatmap () {
     if (!this.heatmap) return;
     
-    if (!this.hasMultipleHeatmaps()) {
+    if (this.hasSingleIntensity()) {
       this.heatmap.setMap(null);
     } else {
       Array.isArray(this.heatmap) && this.heatmap.forEach((heatmap) => {
