@@ -2,7 +2,6 @@ import { queryParams } from './queryParams.js';
 import { API } from './api.js';
 
 const HTML_MAP_CONTAINER = document.getElementById('map');
-const HTML_MAP_THRESHOLD = document.getElementById('map-threshold');
 const HTML_MAP_SELECT = document.getElementById('map-select');
 const HTML_ZOOM_TO_FIT = document.getElementById('zoom-to-fit');
 const MAP_OPTIONS = {
@@ -104,7 +103,6 @@ function parseMapData (results, layer) {
         maxIntensity: MAX_INTENSITY,
         opacity: 1
       });
-      
       layer.heatmap.push(newHeatmap);
     });
 
@@ -253,7 +251,6 @@ MapApp is the primary engine for showing and controlling maps on the web page.
  */
 class MapApp {
   constructor () {
-    HTML_MAP_THRESHOLD.addEventListener('change', this.renderMap.bind(this));
     HTML_ZOOM_TO_FIT.addEventListener('click', zoomToFit);
     
     this.fetchMapData();
@@ -391,7 +388,9 @@ class MapApp {
       this.activateLayer(layer);
     });
 
-    label.style.borderRight = `0.5em solid ${layer.colour}`;
+    const colour = (layer.hasSingleIntensity()) ? layer.colour : 'transparent';
+    
+    label.style.borderRight = `1em solid ${colour}`;
     label.appendChild(input)
     label.appendChild(span);
     div.appendChild(label);
@@ -405,6 +404,7 @@ class MapApp {
         const li = document.createElement('li');
         li.textContent = legend;
         li.dataset.legendValue = index + 1;
+        li.style.borderRight = `0.5em solid ${layer.colour[index]}`;
         ol.appendChild(li);
       });
       div.appendChild(ol);
@@ -419,7 +419,15 @@ class MapApp {
   }
   
   chooseLayerColour (index, hasMultipleIntensities) {
-    if (hasMultipleIntensities) return 'rgba(255, 0, 0, 1.0)';
+    if (hasMultipleIntensities) {
+      return [
+        'rgba(255, 255, 0, 1.0)',
+        'rgba(255, 192, 0, 1.0)',
+        'rgba(255, 128, 0, 1.0)',
+        'rgba(255, 64, 0, 1.0)',
+        'rgba(255, 0, 0, 1.0)',
+      ];
+    }
     
     const colours = [
       'rgba(255, 255, 0, 1.0)',
@@ -465,21 +473,6 @@ class MapApp {
         }
       }
     });
-    this.updateMapControlsUI();
-  }
-  
-  updateMapControlsUI () {
-    const threshold = parseInt(HTML_MAP_THRESHOLD.value);
-    const thresholdMin = Number.parseInt(HTML_MAP_THRESHOLD.min);
-    const thresholdMax = Number.parseInt(HTML_MAP_THRESHOLD.max);
-
-    for (let val = thresholdMin; val <= thresholdMax; val++) {
-      const selectedElements = document.querySelectorAll(`.layer-control-legends li[data-legend-value='${val}']`);
-      Array.from(selectedElements).forEach((element) => {
-        if (val >= threshold) element.className = 'selected';
-        else element.className = 'unselected';
-      });
-    }
   }
   
   activateLayer (layer) {
