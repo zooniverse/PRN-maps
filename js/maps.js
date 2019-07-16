@@ -22,8 +22,20 @@ var HEATMAP_DATA = {};  // TODO: move this into MapApp
 const VISIBLE_WEIGHT_MULTIPLIER = 1;
 const VISIBLE_WEIGHT_EXPONENT = 1;
 
+// IMPORTANT: for PRN maps, every point on the map has a minimum weight of 1.
+// This includes POIs where there's nothing of interest happening. Essentually,
+// this means that when we display a heatmap, we essentially anything that's of
+// the minimum intensity
+const MIN_INTENSITY = 1;
+
+// IMPORTANT: for PRN maps, there's a known maximum weight. However, for visual
+// presentation purposes, we often use a lower artificial max intensity to make
+// the heatmap dots more visible on a map.
+const MAX_INTENSITY = 4;
+const ARTIFICIAL_MAX_INTENSITY = 2;
+
 function minimumWeight ([lat, lng, weight]) {
-  return weight > 1;  // Data context: for PRN maps, every point on the map has a minimum weight of 1.
+  return weight > MIN_INTENSITY;
 }
 
 function parseLine ([lat, lng, weight]) {
@@ -70,26 +82,19 @@ function parseMapData (results, layer) {
   
   if (layer.hasSingleIntensity()) {
     
-    const MAX_INTENSITY = 2;
-    
     // If a heatmap already exists, remove it.
     layer.hideHeatmap();
 
     // Add the new heatmap
     layer.heatmap = new google.maps.visualization.HeatmapLayer({
       gradient: layer.gradient,
-      maxIntensity: MAX_INTENSITY,
+      maxIntensity: ARTIFICIAL_MAX_INTENSITY,
       opacity: 1
     });
     
     layer.showHeatmap(GOOGLE_MAP);
     
   } else {
-    
-    const MAX_INTENSITY = 2;  // Artificially lower the intensity instead of using layer.legend.length
-    // Context: this creates better visuals since the differentiator between
-    // intensities should be the colours, not necessarily the opacity & size
-    //  as is the default with Google heatmaps.
     
     // If a heatmap already exists, remove it.
     layer.hideHeatmap();
@@ -100,7 +105,7 @@ function parseMapData (results, layer) {
     layer.legend && layer.legend.forEach((legend, index) => {
       const newHeatmap = new google.maps.visualization.HeatmapLayer({
         gradient: layer.gradient[index],
-        maxIntensity: MAX_INTENSITY,
+        maxIntensity: ARTIFICIAL_MAX_INTENSITY,
         opacity: 1
       });
       layer.heatmap.push(newHeatmap);
@@ -219,11 +224,12 @@ class Layer {
       this.heatmap.setMap(targetMap);
     } else {
       Array.isArray(this.heatmap) && this.heatmap.forEach((heatmap, index) => {
-        const intensity = index + 2;  // TODO: check this arbitrary maths
+        const intensity = index + MIN_INTENSITY;
+        if (intensity == MIN_INTENSITY) return;  // Ignore the minimum intensity, since it's applied to every 'blank' POI
         
         const heatmapData = this.csvData && this.csvData.data
           .filter(([lat, lng, weight]) => {
-            return weight == intensity;  // TODO: check that this doesn't miss out on anything
+            return weight == intensity;
           })
           .map(parseLine);
         
