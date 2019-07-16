@@ -138,7 +138,12 @@ function zoomToFit () {
         bounds.extend(point.location);
       });
     } else {
-      // TODO
+      layer.show && layer.heatmap && layer.heatmap.forEach((heatmap) => {
+        const data = heatmap.getData();
+        data.forEach((point) => {
+          bounds.extend(point.location);
+        });
+      });      
     }
   });
   GOOGLE_MAP.fitBounds(bounds);
