@@ -2,7 +2,6 @@ import { queryParams } from './queryParams.js';
 import { API } from './api.js';
 
 const HTML_MAP_CONTAINER = document.getElementById('map');
-const HTML_MAP_THRESHOLD = document.getElementById('map-threshold');
 const HTML_MAP_SELECT = document.getElementById('map-select');
 const HTML_ZOOM_TO_FIT = document.getElementById('zoom-to-fit');
 const MAP_OPTIONS = {
@@ -21,12 +20,22 @@ var HEATMAP_DATA = {};  // TODO: move this into MapApp
 
 // The dots are more visible on the map with a higher weight.
 const VISIBLE_WEIGHT_MULTIPLIER = 1;
-const VISIBLE_WEIGHT_EXPONENT = 2;
-const MAX_INTENSITY = 5;
+const VISIBLE_WEIGHT_EXPONENT = 1;
+
+// IMPORTANT: for PRN maps, every point on the map has a minimum weight of 1.
+// This includes POIs where there's nothing of interest happening. Essentually,
+// this means that when we display a heatmap, we essentially anything that's of
+// the minimum intensity
+const MIN_INTENSITY = 1;
+
+// IMPORTANT: for PRN maps, there's a known maximum weight. However, for visual
+// presentation purposes, we often use a lower artificial max intensity to make
+// the heatmap dots more visible on a map.
+const MAX_INTENSITY = 4;
+const ARTIFICIAL_MAX_INTENSITY = 2;
 
 function minimumWeight ([lat, lng, weight]) {
-  const threshold = parseInt(HTML_MAP_THRESHOLD.value);
-  return weight >= threshold;
+  return weight > MIN_INTENSITY;
 }
 
 function parseLine ([lat, lng, weight]) {
@@ -70,19 +79,41 @@ function cacheMapData (results, file, layer) {
 }
 
 function parseMapData (results, layer) {
-  // If a heatmap already exists, remove it.
-  if (layer.heatmap) layer.heatmap.setMap(null);
   
-  // Add the new heatmap
-  layer.heatmap = new google.maps.visualization.HeatmapLayer({
-    gradient: layer.gradient,
-    maxIntensity: MAX_INTENSITY,  // TODO: change level of maxIntensity based on metadata
-    opacity: 1
-  });
-  
-  const heatmapData = filteredMapData(results);
-  layer.heatmap.setData(heatmapData);
-  layer.heatmap.setMap(GOOGLE_MAP);
+  if (layer.hasSingleIntensity()) {
+    
+    // If a heatmap already exists, remove it.
+    layer.hideHeatmap();
+
+    // Add the new heatmap
+    layer.heatmap = new google.maps.visualization.HeatmapLayer({
+      gradient: layer.gradient,
+      maxIntensity: ARTIFICIAL_MAX_INTENSITY,
+      opacity: 1
+    });
+    
+    layer.showHeatmap(GOOGLE_MAP);
+    
+  } else {
+    
+    // If a heatmap already exists, remove it.
+    layer.hideHeatmap();
+
+    // Add the new heatmap _for each intensity_ (each legend item = 1 intensity)
+    layer.heatmap = [];
+    
+    layer.legend && layer.legend.forEach((legend, index) => {
+      const newHeatmap = new google.maps.visualization.HeatmapLayer({
+        gradient: layer.gradient[index],
+        maxIntensity: ARTIFICIAL_MAX_INTENSITY,
+        opacity: 1
+      });
+      layer.heatmap.push(newHeatmap);
+    });
+
+    layer.showHeatmap(GOOGLE_MAP);
+
+  }
 }
 
 function fitEventBounds () {
@@ -104,10 +135,19 @@ function fitEventBounds () {
 function zoomToFit () {
   const bounds  = new google.maps.LatLngBounds();
   selectAllLayers().forEach((layer) => {
-    const data = layer.show && layer.heatmap && layer.heatmap.getData() || [];
-    data.forEach((point) => {
-      bounds.extend(point.location);
-    });
+    if (layer.hasSingleIntensity()) {
+      const data = layer.show && layer.heatmap && layer.heatmap.getData() || [];
+      data.forEach((point) => {
+        bounds.extend(point.location);
+      });
+    } else {
+      layer.show && layer.heatmap && layer.heatmap.forEach((heatmap) => {
+        const data = heatmap.getData();
+        data.forEach((point) => {
+          bounds.extend(point.location);
+        });
+      });      
+    }
   });
   GOOGLE_MAP.fitBounds(bounds);
   GOOGLE_MAP.panToBounds(bounds);
@@ -129,10 +169,94 @@ if (pendingLayers) {
   getLayerFunc = 'layer';
 }
 
+/*
+A "LayerGroup" is exactly what the name implies. Identified by its 'version'.
+ */
+class LayerGroup {
+  constructor (initialProps) {
+    this.version = '',
+    this.name = '',
+    this.metadataUrl = '',
+    this.layers = [];
+    
+    Object.assign(this, initialProps);
+  }
+}
+
+/*
+A "Layer" represents a single grouping of data on the map. Identified by its
+'url'.
+
+Note: if a Layer has Legends (i.e. it has a range of Intensity values instead
+of a single true/false Intensity), it follows a different logic - it has
+multiple heatmap objects (instead of one), to reflect each intensity value.
+ */
+class Layer {
+  constructor (initialProps) {
+    this.name = '',
+    this.group = '',
+    this.url = '',
+    this.description = '';
+    this.legend = [];
+    this.colour = [];
+    this.gradient = [];
+    this.heatmap = undefined;  // Either a single object, or an array.
+    this.csvData = undefined;
+    this.show = false;
+    
+    Object.assign(this, initialProps);
+  }
+  
+  hasSingleIntensity () {
+    return !this.hasMultipleIntensities();
+  }
+  
+  hasMultipleIntensities () {
+    return (this.legend && this.legend.length > 0) || (this.heatmap && Array.isArray(this.heatmap));
+  }
+  
+  showHeatmap (targetMap) {
+    if (!this.heatmap) return;
+    
+    if (this.hasSingleIntensity()) {
+      const heatmapData = filteredMapData(this.csvData);
+      this.heatmap.setData(heatmapData);
+      this.heatmap.setMap(targetMap);
+    } else {
+      Array.isArray(this.heatmap) && this.heatmap.forEach((heatmap, index) => {
+        const intensity = index + MIN_INTENSITY;
+        if (intensity == MIN_INTENSITY) return;  // Ignore the minimum intensity, since it's applied to every 'blank' POI
+        
+        const heatmapData = this.csvData && this.csvData.data
+          .filter(([lat, lng, weight]) => {
+            return weight == intensity;
+          })
+          .map(parseLine);
+        
+        heatmap.setData(heatmapData);
+        heatmap.setMap(targetMap);
+      });
+    }
+  }
+  
+  hideHeatmap () {
+    if (!this.heatmap) return;
+    
+    if (this.hasSingleIntensity()) {
+      this.heatmap.setMap(null);
+    } else {
+      Array.isArray(this.heatmap) && this.heatmap.forEach((heatmap) => {
+        heatmap.setMap(null);
+      });
+    }
+  }
+}
+
+/*
+MapApp is the primary engine for showing and controlling maps on the web page.
+ */
 class MapApp {
   constructor () {
-    // HTML_MAP_SELECT.addEventListener('change', this.updateSelectedMap);
-    HTML_MAP_THRESHOLD.addEventListener('change', this.renderMap.bind(this));
     HTML_ZOOM_TO_FIT.addEventListener('click', zoomToFit);
     
     this.fetchMapData();
@@ -159,26 +283,28 @@ class MapApp {
       let layers = {};
       group.layers.forEach((layer, index) => {
         const metadata = (group.metadata && group.metadata.layers && group.metadata.layers[index]) || {};
-        layers[layer.url] = {
+        const hasMultipleIntensities = metadata.legend && metadata.legend.length > 1;
+        
+        layers[layer.url] = new Layer({
           name: layer.name,
           group: group.version,
           url: layer.url,
           description: metadata.description,
           legend: metadata.legend,
-          colour: this.chooseLayerColour(index),
-          gradient: this.chooseLayerGradient(index),
+          colour: this.chooseLayerColour(index, hasMultipleIntensities),
+          gradient: this.chooseLayerGradient(index, hasMultipleIntensities),
           heatmap: undefined,
           csvData: undefined,
           show: false,
-        };
+        });
       })
 
-      HEATMAP_DATA[group.version] = {
+      HEATMAP_DATA[group.version] = new LayerGroup({
         version: group.version,
         name: group.metadata.AOI,
         metadataUrl: group.metadata_url,
         layers,
-      };
+      });
     });
     
     return layerGroups;
@@ -268,7 +394,9 @@ class MapApp {
       this.activateLayer(layer);
     });
 
-    label.style.borderRight = `0.5em solid ${layer.colour}`;
+    const colour = (layer.hasSingleIntensity()) ? layer.colour : 'transparent';
+    
+    label.style.borderRight = `0.5em solid ${colour}`;
     label.appendChild(input)
     label.appendChild(span);
     div.appendChild(label);
@@ -282,6 +410,7 @@ class MapApp {
         const li = document.createElement('li');
         li.textContent = legend;
         li.dataset.legendValue = index + 1;
+        li.style.borderRight = `0.5em solid ${layer.colour[index]}`;
         ol.appendChild(li);
       });
       div.appendChild(ol);
@@ -295,24 +424,44 @@ class MapApp {
     return div;
   }
   
-  chooseLayerColour (index) {
+  chooseLayerColour (index, hasMultipleIntensities) {
+    if (hasMultipleIntensities) {
+      return [
+        'rgba(255, 255, 192, 1.0)',
+        'rgba(255, 255, 0, 1.0)',
+        'rgba(255, 128, 0, 1.0)',
+        'rgba(255, 0, 0, 1.0)',
+        'rgba(255, 0, 128, 1.0)',
+      ];
+    }
+    
     const colours = [
-      'rgba(255, 255, 0, 1.0)',
-      'rgba(255, 0, 255, 1.0)',
+      'rgba(192, 128, 0, 1.0)',
+      'rgba(192, 0, 255, 1.0)',
       'rgba(0, 255, 255, 1.0)',
-      'rgba(255, 0, 0, 1.0)',
-      'rgba(0, 255, 0, 1.0)',
+      'rgba(0, 255, 128, 1.0)',
+      'rgba(255, 0, 255, 1.0)',
     ];
     return colours[Math.min(index, colours.length - 1)];
   }
   
-  chooseLayerGradient (index) {
+  chooseLayerGradient (index, hasMultipleIntensities) {
+    if (hasMultipleIntensities) {
+      return [
+        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 255, 192, 0.7)', ],
+        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 255, 0, 0.7)', ],
+        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 128, 0, 0.7)', ],
+        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 0, 0, 0.7)', ],
+        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 0, 128, 0.7)', ],
+      ];
+    }
+    
     const colours = [
-      [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 255, 0, 0.5)', ],
-      [ 'rgba(255, 0, 255, 0.0)', 'rgba(255, 0, 255, 0.5)', ],
-      [ 'rgba(0, 255, 255, 0.0)', 'rgba(0, 255, 255, 0.5)', ],
-      [ 'rgba(255, 0, 0, 0.0)', 'rgba(255, 0, 0, 0.5)', ],
-      [ 'rgba(0, 255, 0, 0.0)', 'rgba(0, 255, 0, 0.5)', ],
+      [ 'rgba(255, 255, 255, 0.0)', 'rgba(192, 128, 0, 0.7)', ],
+      [ 'rgba(255, 255, 255, 0.0)', 'rgba(192, 0, 255, 0.7)', ],
+      [ 'rgba(255, 255, 255, 0.0)', 'rgba(0, 255, 255, 0.7)', ],
+      [ 'rgba(255, 255, 255, 0.0)', 'rgba(0, 255, 128, 0.7)', ],
+      [ 'rgba(255, 255, 255, 0.0)', 'rgba(255, 0, 255, 0.7)', ],
     ];
     return colours[Math.min(index, colours.length - 1)];
   }
@@ -321,32 +470,15 @@ class MapApp {
     // For each map, show/hide them as necessary.
     selectAllLayers().forEach((layer) => {
       if (!layer.show) {
-        layer.heatmap && layer.heatmap.setMap(null);
+        layer.hideHeatmap();
       } else {
         if (layer && layer.heatmap) {
-          const heatmapData = filteredMapData(layer.csvData);
-          layer.heatmap.setData(heatmapData);
-          layer.heatmap.setMap(GOOGLE_MAP);
+          layer.showHeatmap(GOOGLE_MAP);
         } else {
           readMapFile(layer, resolveFunction);
         }
       }
     });
-    this.updateMapControlsUI();
-  }
-  
-  updateMapControlsUI () {
-    const threshold = parseInt(HTML_MAP_THRESHOLD.value);
-    const thresholdMin = Number.parseInt(HTML_MAP_THRESHOLD.min);
-    const thresholdMax = Number.parseInt(HTML_MAP_THRESHOLD.max);
-
-    for (let val = thresholdMin; val <= thresholdMax; val++) {
-      const selectedElements = document.querySelectorAll(`.layer-control-legends li[data-legend-value='${val}']`);
-      Array.from(selectedElements).forEach((element) => {
-        if (val >= threshold) element.className = 'selected';
-        else element.className = 'unselected';
-      });
-    }
   }
   
   activateLayer (layer) {
