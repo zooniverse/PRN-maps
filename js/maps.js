@@ -396,7 +396,7 @@ class MapApp {
 
     const colour = (layer.hasSingleIntensity()) ? layer.colour : 'transparent';
     
-    label.style.borderRight = `1em solid ${colour}`;
+    label.style.borderRight = `0.5em solid ${colour}`;
     label.appendChild(input)
     label.appendChild(span);
     div.appendChild(label);
@@ -427,20 +427,20 @@ class MapApp {
   chooseLayerColour (index, hasMultipleIntensities) {
     if (hasMultipleIntensities) {
       return [
+        'rgba(255, 255, 192, 1.0)',
         'rgba(255, 255, 0, 1.0)',
-        'rgba(255, 192, 0, 1.0)',
         'rgba(255, 128, 0, 1.0)',
-        'rgba(255, 64, 0, 1.0)',
         'rgba(255, 0, 0, 1.0)',
+        'rgba(255, 0, 128, 1.0)',
       ];
     }
     
     const colours = [
-      'rgba(255, 255, 0, 1.0)',
-      'rgba(255, 0, 255, 1.0)',
+      'rgba(192, 128, 0, 1.0)',
+      'rgba(192, 0, 255, 1.0)',
       'rgba(0, 255, 255, 1.0)',
-      'rgba(0, 255, 0, 1.0)',
-      'rgba(255, 0, 0, 1.0)',
+      'rgba(0, 255, 128, 1.0)',
+      'rgba(255, 0, 255, 1.0)',
     ];
     return colours[Math.min(index, colours.length - 1)];
   }
@@ -448,20 +448,20 @@ class MapApp {
   chooseLayerGradient (index, hasMultipleIntensities) {
     if (hasMultipleIntensities) {
       return [
-        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 255, 0, 0.5)', ],
-        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 192, 0, 0.5)', ],
-        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 128, 0, 0.5)', ],
-        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 64, 0, 0.5)', ],
-        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 0, 0, 0.5)', ],
+        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 255, 192, 0.7)', ],
+        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 255, 0, 0.7)', ],
+        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 128, 0, 0.7)', ],
+        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 0, 0, 0.7)', ],
+        [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 0, 128, 0.7)', ],
       ];
     }
     
     const colours = [
-      [ 'rgba(255, 255, 0, 0.0)', 'rgba(255, 255, 0, 0.5)', ],
-      [ 'rgba(255, 0, 255, 0.0)', 'rgba(255, 0, 255, 0.5)', ],
-      [ 'rgba(0, 255, 255, 0.0)', 'rgba(0, 255, 255, 0.5)', ],
-      [ 'rgba(0, 255, 0, 0.0)', 'rgba(0, 255, 0, 0.5)', ],
-      [ 'rgba(255, 0, 0, 0.0)', 'rgba(255, 0, 0, 0.5)', ],
+      [ 'rgba(255, 255, 255, 0.0)', 'rgba(192, 128, 0, 0.7)', ],
+      [ 'rgba(255, 255, 255, 0.0)', 'rgba(192, 0, 255, 0.7)', ],
+      [ 'rgba(255, 255, 255, 0.0)', 'rgba(0, 255, 255, 0.7)', ],
+      [ 'rgba(255, 255, 255, 0.0)', 'rgba(0, 255, 128, 0.7)', ],
+      [ 'rgba(255, 255, 255, 0.0)', 'rgba(255, 0, 255, 0.7)', ],
     ];
     return colours[Math.min(index, colours.length - 1)];
   }
