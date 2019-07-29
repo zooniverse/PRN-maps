@@ -482,13 +482,32 @@ class MapApp {
   }
   
   activateLayer (layer) {
+    // If the user activated a layer that's in a different group, it's a good
+    // idea to reframe the view to show the new group.
+    const autoZoomToFitIsAGoodIdea = this.shouldWeZoomToFit(layer);
+    console.log('+++ autoZoomToFitIsAGoodIdea: ', autoZoomToFitIsAGoodIdea)
+    
     this.deactivateAllLayers();
     layer.show = true;
-    this.renderMap();
+    
+    if (autoZoomToFitIsAGoodIdea) this.renderMap(zoomToFit);
+    else this.renderMap();
   }
   
   deactivateAllLayers () {
     selectAllLayers().forEach((layer) => { layer.show = false; });
+  }
+  
+  shouldWeZoomToFit (newlyActivatedLayer = {}) {
+    const currentActiveGroup = Object.keys(HEATMAP_DATA).find(groupId => {
+      const group = HEATMAP_DATA[groupId];
+      return Object.keys(group.layers).find(layerId => group.layers[layerId].show);
+    });
+    
+    console.log('+++ currentActiveGroup: ', currentActiveGroup)
+    console.log('+++ newlyActivatedLayer.group: ', newlyActivatedLayer.group)
+    
+    return (currentActiveGroup !== newlyActivatedLayer.group);
   }
 }
 
