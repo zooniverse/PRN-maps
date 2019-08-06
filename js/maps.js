@@ -474,6 +474,7 @@ class MapApp {
       } else {
         if (layer && layer.heatmap) {
           layer.showHeatmap(GOOGLE_MAP);
+          if (resolveFunction) resolveFunction();
         } else {
           readMapFile(layer, resolveFunction);
         }
@@ -484,14 +485,16 @@ class MapApp {
   activateLayer (layer) {
     // If the user activated a layer that's in a different group, it's a good
     // idea to reframe the view to show the new group.
-    const autoZoomToFitIsAGoodIdea = this.shouldWeZoomToFit(layer);
-    console.log('+++ autoZoomToFitIsAGoodIdea: ', autoZoomToFitIsAGoodIdea)
+    const autoZoomIsAGoodIdea = this.shouldWeZoomToFit(layer);
     
     this.deactivateAllLayers();
     layer.show = true;
     
-    if (autoZoomToFitIsAGoodIdea) this.renderMap(zoomToFit);
-    else this.renderMap();
+    if (autoZoomIsAGoodIdea) {
+      this.renderMap(zoomToFit);
+    } else {
+      this.renderMap();
+    }
   }
   
   deactivateAllLayers () {
@@ -503,9 +506,6 @@ class MapApp {
       const group = HEATMAP_DATA[groupId];
       return Object.keys(group.layers).find(layerId => group.layers[layerId].show);
     });
-    
-    console.log('+++ currentActiveGroup: ', currentActiveGroup)
-    console.log('+++ newlyActivatedLayer.group: ', newlyActivatedLayer.group)
     
     return (currentActiveGroup !== newlyActivatedLayer.group);
   }
