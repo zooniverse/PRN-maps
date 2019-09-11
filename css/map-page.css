@@ -27,6 +27,13 @@
 #map-select label {
   display: block;
 }
+#map-select .extra-info {
+  overflow: auto;
+  white-space: pre;
+  font-size: 0.75em;
+  background: #eee;
+  padding: 0.25em;
+}
 #map-select .submenu {
   background: #ccc;
   padding: 0.25em;

@@ -181,6 +181,7 @@ class LayerGroup {
   constructor (initialProps) {
     this.version = '',
     this.name = '',
+    this.uploadedAt = '';
     this.metadataUrl = '',
     this.layers = [];
     
@@ -307,6 +308,7 @@ class MapApp {
       HEATMAP_DATA[group.version] = new LayerGroup({
         version: group.version,
         name: group.metadata.AOI,
+        uploadedAt: group.metadata.uploaded_at,
         metadataUrl: group.metadata_url,
         layers,
       });
@@ -337,10 +339,13 @@ class MapApp {
     htmlGroup.className = 'group';
 
     const htmlHeader = document.createElement('legend');
-    htmlHeader.textContent = (layerGroup.metadata && layerGroup.metadata.AOI)
-      ? layerGroup.metadata.AOI
-      : layerGroup.version;
+    htmlHeader.textContent = layerGroup.name || layerGroup.version;
     htmlGroup.appendChild(htmlHeader);
+    
+    const htmlExtraInfo = document.createElement('div');
+    htmlExtraInfo.className = 'extra-info';
+    htmlExtraInfo.textContent = `Name: ${layerGroup.name}\r\nVer: ${layerGroup.version}\r\nUploaded: ${layerGroup.uploadedAt}`; 
+    htmlGroup.appendChild(htmlExtraInfo);
 
     const htmlSubmenu = document.createElement('div');
     htmlSubmenu.className = 'submenu';
