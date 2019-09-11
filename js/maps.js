@@ -24,9 +24,14 @@ const VISIBLE_WEIGHT_EXPONENT = 1;
 
 // IMPORTANT: for PRN maps, every point on the map has a minimum weight of 1.
 // This includes POIs where there's nothing of interest happening. Essentually,
-// this means that when we display a heatmap, we essentially anything that's of
-// the minimum intensity
-const MIN_INTENSITY = 1;
+// this means that when we display a heatmap, we essentially clutter the map
+// with points EVERYWHERE.
+// const MIN_INTENSITY = 1;
+
+// HOTFIX 20190911: ignore what that previous block of code said. They data
+// suppliers have now changed the newer data sets so that POIs with nothing
+// happening aren't listed, so a weight of 1 actually means something now.
+const MIN_INTENSITY = 0;
 
 // IMPORTANT: for PRN maps, there's a known maximum weight. However, for visual
 // presentation purposes, we often use a lower artificial max intensity to make
