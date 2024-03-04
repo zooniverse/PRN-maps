@@ -4,7 +4,7 @@
   "description": "Visualisation of PRN map data.",
   "main": "index.html",
   "dependencies": {
-    "express": "^4.18.2",
+    "express": "^4.18.3",
     "superagent": "^8.1.2"
   },
   "devDependencies": {},
